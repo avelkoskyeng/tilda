@@ -1,0 +1,7 @@
+body {
+    font-variant-numeric: lining-nums proportional-nums; 
+    font-family: 'StratosSkyeng';
+    font-style: normal;
+    font-weight: 400;
+    font-feature-settings: 'pnum' on, 'lnum' on;
+    }
