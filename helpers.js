@@ -78,14 +78,14 @@
 (function (window, document) {
   'use strict';
 
-  window.cp_tpl = window.cp_tpl || {};
+  var cp = window.cp_tpl = window.cp_tpl || {};
 
   var zoomItems = [];
   var zoomRegistry = {};
   var zoomResizeBound = false;
   var zoomRafId = null;
 
-  window.cp_tpl.zoom = function (config) {
+  cp.zoom = function (config) {
     var options = normalizeZoomConfig(config);
 
     if (!options.selector) {
@@ -99,7 +99,8 @@
       options.desktopBase,
       options.mobileBase,
       options.desktopVar,
-      options.mobileVar
+      options.mobileVar,
+      options.mode
     ].join('|');
 
     if (zoomRegistry[key]) {
@@ -125,6 +126,18 @@
 
     var desktopBase = config.desktopBase || 1200;
     var mobileBase = config.mobileBase || 376;
+    var mode = config.mode || config.only || 'both';
+
+    if (Array.isArray(config.devices)) {
+      if (config.devices.length === 1) {
+        mode = config.devices[0];
+      } else {
+        mode = 'both';
+      }
+    }
+
+    if (mode === 'mob') mode = 'mobile';
+    if (mode === 'desk') mode = 'desktop';
 
     return {
       selector: config.selector,
@@ -134,7 +147,9 @@
       mobileBase: mobileBase,
 
       desktopVar: config.desktopVar || '--z' + desktopBase,
-      mobileVar: config.mobileVar || '--z' + mobileBase
+      mobileVar: config.mobileVar || '--z' + mobileBase,
+
+      mode: mode === 'mobile' || mode === 'desktop' ? mode : 'both'
     };
   }
 
@@ -143,29 +158,39 @@
       options.selector,
       options.breakpoint,
       options.desktopVar,
-      options.mobileVar
+      options.mobileVar,
+      options.mode
     ].join('|'));
 
     if (document.getElementById(styleId)) {
       return;
     }
 
+    var rules = [];
+
+    if (options.mode === 'desktop' || options.mode === 'both') {
+      rules.push(
+        '@media (min-width: ' + options.breakpoint + 'px) {',
+        '  ' + options.selector + ' {',
+        '    zoom: var(' + options.desktopVar + ', 1);',
+        '  }',
+        '}'
+      );
+    }
+
+    if (options.mode === 'mobile' || options.mode === 'both') {
+      rules.push(
+        '@media (max-width: ' + (options.breakpoint - 1) + 'px) {',
+        '  ' + options.selector + ' {',
+        '    zoom: var(' + options.mobileVar + ', 1);',
+        '  }',
+        '}'
+      );
+    }
+
     var style = document.createElement('style');
     style.id = styleId;
-
-    style.innerHTML = [
-      '@media (min-width: ' + options.breakpoint + 'px) {',
-      '  ' + options.selector + ' {',
-      '    zoom: var(' + options.desktopVar + ', 1);',
-      '  }',
-      '}',
-      '',
-      '@media (max-width: ' + (options.breakpoint - 1) + 'px) {',
-      '  ' + options.selector + ' {',
-      '    zoom: var(' + options.mobileVar + ', 1);',
-      '  }',
-      '}'
-    ].join('\n');
+    style.innerHTML = rules.join('\n\n');
 
     document.head.appendChild(style);
   }
@@ -173,15 +198,19 @@
   function updateZoomVars(options) {
     var width = window.innerWidth || document.documentElement.clientWidth;
 
-    document.documentElement.style.setProperty(
-      options.desktopVar,
-      width / options.desktopBase
-    );
+    if (options.mode === 'desktop' || options.mode === 'both') {
+      document.documentElement.style.setProperty(
+        options.desktopVar,
+        width / options.desktopBase
+      );
+    }
 
-    document.documentElement.style.setProperty(
-      options.mobileVar,
-      width / options.mobileBase
-    );
+    if (options.mode === 'mobile' || options.mode === 'both') {
+      document.documentElement.style.setProperty(
+        options.mobileVar,
+        width / options.mobileBase
+      );
+    }
   }
 
   function updateAllZoomVars() {
@@ -261,6 +290,18 @@
     }
   };
 
+  cp.hiddenFieldsState = cp.hiddenFieldsState || {
+    values: {},
+    utmMarksMap: {
+      promoCode: 'promocode',
+      promocode: 'promocode',
+      promo: 'promocode',
+      comment: 'comment',
+      marketing_experiments: 'marketingExperiments',
+      marketingExperiments: 'marketingExperiments'
+    }
+  };
+
   function ensureStyle(id, css) {
     if (document.getElementById(id)) return;
 
@@ -270,16 +311,35 @@
     document.head.appendChild(style);
   }
 
-  function onReady(fn) {
+  function onReady(callback) {
     if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', fn);
+      document.addEventListener('DOMContentLoaded', callback);
     } else {
-      fn();
+      callback();
     }
   }
 
   function toArray(value) {
     return Array.prototype.slice.call(value || []);
+  }
+
+  function hasValue(value) {
+    return value != null && value !== '';
+  }
+
+  function cleanObject(object) {
+    var result = {};
+
+    Object.keys(object || {}).forEach(function (key) {
+      var value = object[key];
+
+      if (value === undefined || value === null) return;
+      if (typeof value === 'string' && value.trim() === '') return;
+
+      result[key] = value;
+    });
+
+    return result;
   }
 
   function getInputByName(box, name) {
@@ -304,15 +364,6 @@
     }
   }
 
-  /**
-   * Logo
-   *
-   * window.cp_tpl.logo({
-   *   selector: '.js-logo',
-   *   brand: 'skyeng',
-   *   color: 'white'
-   * });
-   */
   cp.logo = function (config) {
     config = config || {};
 
@@ -337,42 +388,33 @@
     }
 
     function applyLogo() {
-      document.querySelectorAll(selector).forEach(function (el) {
-        var img = null;
+      document.querySelectorAll(selector).forEach(function (element) {
+        var image = null;
 
         if (mode === 'background') {
-          el.style.backgroundImage = 'url("' + src + '")';
+          element.style.backgroundImage = 'url("' + src + '")';
           return;
         }
 
-        if (el.tagName === 'IMG') {
-          img = el;
+        if (element.tagName === 'IMG') {
+          image = element;
         } else {
-          img = el.querySelector('img');
+          image = element.querySelector('img');
         }
 
-        if (img && mode !== 'background') {
-          img.setAttribute('src', src);
-          img.setAttribute('data-original', src);
+        if (image && mode !== 'background') {
+          image.setAttribute('src', src);
+          image.setAttribute('data-original', src);
           return;
         }
 
-        el.style.backgroundImage = 'url("' + src + '")';
+        element.style.backgroundImage = 'url("' + src + '")';
       });
     }
 
     onReady(applyLogo);
   };
 
-  /**
-   * Hidden fields
-   *
-   * window.cp_tpl.hiddenFields({
-   *   promoCode: '',
-   *   marketing_experiments: 'cashbackoftheday',
-   *   comment: 'кешбекдня'
-   * });
-   */
   cp.hiddenFields = function (fields, config) {
     fields = fields || {};
     config = config || {};
@@ -381,6 +423,16 @@
     var boxSelector = config.boxSelector || '.t-form__inputsbox';
     var observe = config.observe !== false;
     var observer = null;
+
+    cp.hiddenFieldsState.values = Object.assign({}, cp.hiddenFieldsState.values, fields);
+
+    if (config.utmMarksMap) {
+      cp.hiddenFieldsState.utmMarksMap = Object.assign(
+        {},
+        cp.hiddenFieldsState.utmMarksMap,
+        config.utmMarksMap
+      );
+    }
 
     function apply() {
       document.querySelectorAll(formSelector + ' ' + boxSelector).forEach(function (box) {
@@ -419,14 +471,10 @@
     };
   };
 
-  /**
-   * t396_onSuccess
-   *
-   * window.cp_tpl.t396Success(function (ctx) {
-   *   const form = ctx.form;
-   *   // кастомная логика
-   * });
-   */
+  cp.hiddenFields.getValues = function () {
+    return Object.assign({}, cp.hiddenFieldsState.values);
+  };
+
   var t396Wrapped = false;
   var t396Original = null;
   var t396Handlers = {
@@ -440,26 +488,26 @@
     t396Wrapped = true;
     t396Original = window.t396_onSuccess;
 
-    window.t396_onSuccess = function (formObj) {
-      var args = arguments;
-      var form = formObj && formObj[0] ? formObj[0] : formObj;
+    window.t396_onSuccess = function (formObject) {
+      var callbackArguments = arguments;
+      var form = formObject && formObject[0] ? formObject[0] : formObject;
 
-      var ctx = {
+      var formSubmission = {
         form: form,
-        formObj: formObj,
-        args: args
+        formObject: formObject,
+        callbackArguments: callbackArguments
       };
 
       t396Handlers.before.forEach(function (handler) {
-        handler.call(this, ctx);
+        handler.call(this, formSubmission);
       }, this);
 
       if (typeof t396Original === 'function') {
-        t396Original.apply(this, args);
+        t396Original.apply(this, callbackArguments);
       }
 
       t396Handlers.after.forEach(function (handler) {
-        handler.call(this, ctx);
+        handler.call(this, formSubmission);
       }, this);
     };
   }
@@ -478,11 +526,6 @@
     t396Handlers[stage].push(handler);
   };
 
-  /**
-   * Redirect after successful t396 form submit
-   *
-   * window.cp_tpl.t396Redirect('https://study.skyeng.ru/1000languages/final');
-   */
   cp.t396Redirect = function (url, config) {
     config = config || {};
 
@@ -503,22 +546,6 @@
       stage: config.stage || 'after'
     });
   };
-
-  /**
-   * UTM + CJM
-   *
-   * window.cp_tpl.utm({
-   *   parameters: {
-   *     product: {
-   *       value: 'type-skyeng_action|name-cashbackoftheday',
-   *       type: 'hard'
-   *     }
-   *   }
-   * });
-   */
-  function hasValue(value) {
-    return value != null && value !== '';
-  }
 
   function normalizeParam(param) {
     if (param && typeof param === 'object' && 'value' in param) {
@@ -555,6 +582,22 @@
     });
   }
 
+  function getHiddenFieldsForUtmMarks() {
+    var result = {};
+    var fields = cp.hiddenFieldsState.values || {};
+    var map = cp.hiddenFieldsState.utmMarksMap || {};
+
+    Object.keys(fields).forEach(function (fieldName) {
+      var paramName = map[fieldName];
+
+      if (!paramName || !hasValue(fields[fieldName])) return;
+
+      result[paramName] = fields[fieldName];
+    });
+
+    return result;
+  }
+
   function updateURLParameters(parameters) {
     var url = new URL(window.location.href);
 
@@ -563,10 +606,20 @@
     window.history.replaceState(null, '', url.toString());
   }
 
-  function buildUtmMarks(parameters) {
-    var params = new URLSearchParams(window.location.search);
+  function buildUtmMarks(parameters, config) {
+    config = config || {};
 
-    applyParams(params, parameters);
+    var params = new URLSearchParams(window.location.search);
+    var allParameters = {};
+
+    Object.assign(
+      allParameters,
+      window.utmParameters || {},
+      config.includeHiddenFields === false ? {} : getHiddenFieldsForUtmMarks(),
+      parameters || {}
+    );
+
+    applyParams(params, allParameters);
 
     return params.toString();
   }
@@ -595,35 +648,15 @@
     }
 
     if (config.exposeGlobals !== false) {
-      window.buildUtmMarks = function (extra) {
-        var params = {};
-
-        Object.keys(mergedParams).forEach(function (key) {
-          params[key] = mergedParams[key];
-        });
-
-        Object.keys(extra || {}).forEach(function (key) {
-          params[key] = extra[key];
-        });
-
-        return buildUtmMarks(params);
+      window.buildUtmMarks = function (extra, buildConfig) {
+        return buildUtmMarks(extra, buildConfig);
       };
     }
 
     return {
       parameters: mergedParams,
-      buildUtmMarks: function (extra) {
-        var params = {};
-
-        Object.keys(mergedParams).forEach(function (key) {
-          params[key] = mergedParams[key];
-        });
-
-        Object.keys(extra || {}).forEach(function (key) {
-          params[key] = extra[key];
-        });
-
-        return buildUtmMarks(params);
+      buildUtmMarks: function (extra, buildConfig) {
+        return buildUtmMarks(extra, buildConfig);
       }
     };
   };
@@ -631,12 +664,8 @@
   cp.utm.applyParams = applyParams;
   cp.utm.updateURLParameters = updateURLParameters;
   cp.utm.buildUtmMarks = buildUtmMarks;
+  cp.utm.getHiddenFieldsForUtmMarks = getHiddenFieldsForUtmMarks;
 
-  /**
-   * Infinite marquee
-   *
-   * window.cp_tpl.marquee('.marquee--infinite');
-   */
   var marqueeItems = [];
   var marqueeResizeBound = false;
   var marqueeRafId = null;
@@ -780,11 +809,6 @@
     }
   };
 
-  /**
-   * Media: audio/video play, pause, timer, progress
-   *
-   * window.cp_tpl.media();
-   */
   cp.media = function (config) {
     config = config || {};
 
@@ -839,13 +863,13 @@
       '}'
     ].join('\n'));
 
-    function formatTime(sec) {
-      if (isNaN(sec)) return '00:00';
+    function formatTime(seconds) {
+      if (isNaN(seconds)) return '00:00';
 
-      var m = Math.floor(sec / 60).toString().padStart(2, '0');
-      var s = Math.floor(sec % 60).toString().padStart(2, '0');
+      var minutes = Math.floor(seconds / 60).toString().padStart(2, '0');
+      var restSeconds = Math.floor(seconds % 60).toString().padStart(2, '0');
 
-      return m + ':' + s;
+      return minutes + ':' + restSeconds;
     }
 
     function initVideo(video) {
@@ -867,9 +891,9 @@
       if (isAudioLike) {
         video.classList.add('bg_blur');
 
-        var timerEl = document.createElement('div');
-        timerEl.className = 'uc-audio-timer';
-        wrapper.appendChild(timerEl);
+        var timerElement = document.createElement('div');
+        timerElement.className = 'uc-audio-timer';
+        wrapper.appendChild(timerElement);
 
         video.classList.add('uc-audio-progress');
 
@@ -877,16 +901,16 @@
           var percent = video.duration ? (video.currentTime / video.duration) * 100 : 0;
 
           video.style.backgroundSize = percent + '% 100%';
-          timerEl.textContent = formatTime(video.currentTime) + ' / ' + formatTime(video.duration);
+          timerElement.textContent = formatTime(video.currentTime) + ' / ' + formatTime(video.duration);
         });
       }
 
-      var iconEl = document.createElement('div');
-      iconEl.className = 'video-playpause';
-      wrapper.appendChild(iconEl);
+      var iconElement = document.createElement('div');
+      iconElement.className = 'video-playpause';
+      wrapper.appendChild(iconElement);
 
       function updateIcon() {
-        iconEl.style.backgroundImage = 'url(' + (video.paused ? iconPlay : iconPause) + ')';
+        iconElement.style.backgroundImage = 'url(' + (video.paused ? iconPlay : iconPause) + ')';
       }
 
       updateIcon();
@@ -944,22 +968,8 @@
     });
   };
 
-  /**
-   * Scroll indicator
-   *
-   * window.cp_tpl.scrollIndicator();
-   *
-   * window.cp_tpl.scrollIndicator({
-   *   start: 'middle'
-   * });
-   */
   cp.scrollIndicator = function (config) {
     config = config || {};
-
-    var blockSelector = config.blockSelector || '.uc-scroll-block';
-    var scrollSelector = config.scrollSelector || '.add_mob_scroll_indicator > div';
-    var dotsSelector = config.dotsSelector || '.scroll-indicator .dot';
-    var start = config.start || null;
 
     ensureStyle('cp_tpl_scroll_indicator_style', [
       '.scroll-indicator {',
@@ -977,77 +987,119 @@
       '.dot.active {',
       '  background-color: rgba(2, 33, 43, 1);',
       '}',
+      '.cp-scroll-cards,',
       '.add_mob_scroll_indicator > div {',
       '  scrollbar-width: none;',
       '}'
     ].join('\n'));
 
-    function initBlock(block) {
-      if (block.dataset.cpTplScrollIndicatorInited) return;
+    var items = Array.isArray(config.items) ? config.items : [config];
 
-      block.dataset.cpTplScrollIndicatorInited = '1';
+    function shouldStartInMiddle(rootElement, scrollElement, dotsContainer, itemConfig) {
+      if (itemConfig.start === 'middle') return true;
+      if (itemConfig.start === false || itemConfig.start === 'start') return false;
 
-      var scrollWrapper = block.querySelector(scrollSelector);
-      var dots = block.querySelectorAll(dotsSelector);
+      var middleSelector = itemConfig.middleSelector || '.--scroll-mid, .is-scroll-mid, [data-scroll-start="middle"]';
 
-      if (!scrollWrapper || !dots.length) return;
+      return Boolean(
+        rootElement && rootElement.matches && rootElement.matches(middleSelector) ||
+        scrollElement && scrollElement.matches && scrollElement.matches(middleSelector) ||
+        dotsContainer && dotsContainer.matches && dotsContainer.matches(middleSelector)
+      );
+    }
+
+    function initPair(rootElement, scrollElement, dots, itemConfig) {
+      if (!scrollElement || !dots || !dots.length) return;
+
+      var registryTarget = rootElement || scrollElement;
+
+      if (registryTarget.dataset.cpTplScrollIndicatorInited) return;
+
+      registryTarget.dataset.cpTplScrollIndicatorInited = '1';
 
       function updateDots() {
-        var scrollLeft = scrollWrapper.scrollLeft;
-        var maxScrollLeft = scrollWrapper.scrollWidth - scrollWrapper.clientWidth;
+        var scrollLeft = scrollElement.scrollLeft;
+        var maxScrollLeft = scrollElement.scrollWidth - scrollElement.clientWidth;
         var sectionCount = dots.length;
 
         if (sectionCount <= 1 || maxScrollLeft <= 0) {
-          dots.forEach(function (dot, i) {
-            dot.classList.toggle('active', i === 0);
+          dots.forEach(function (dot, index) {
+            dot.classList.toggle('active', index === 0);
           });
 
           return;
         }
 
         var sectionWidth = maxScrollLeft / (sectionCount - 1);
-        var index = Math.round(scrollLeft / sectionWidth);
+        var activeIndex = Math.round(scrollLeft / sectionWidth);
 
-        dots.forEach(function (dot, i) {
-          dot.classList.toggle('active', i === index);
+        dots.forEach(function (dot, index) {
+          dot.classList.toggle('active', index === activeIndex);
         });
       }
 
       function scrollToMiddle() {
-        var maxScrollLeft = scrollWrapper.scrollWidth - scrollWrapper.clientWidth;
+        var maxScrollLeft = scrollElement.scrollWidth - scrollElement.clientWidth;
 
-        scrollWrapper.scrollLeft = maxScrollLeft / 2;
+        scrollElement.scrollLeft = maxScrollLeft / 2;
         updateDots();
       }
 
-      scrollWrapper.addEventListener('scroll', updateDots);
+      scrollElement.addEventListener('scroll', updateDots);
       updateDots();
 
-      if (start === 'middle' || block.classList.contains('--scroll-mid')) {
+      var dotsContainer = dots[0] ? dots[0].parentElement : null;
+
+      if (shouldStartInMiddle(rootElement, scrollElement, dotsContainer, itemConfig)) {
         requestAnimationFrame(scrollToMiddle);
         setTimeout(scrollToMiddle, 300);
       }
     }
 
-    onReady(function () {
-      document.querySelectorAll(blockSelector).forEach(initBlock);
-    });
+    function initByItem(itemConfig) {
+      itemConfig = itemConfig || {};
 
-    window.addEventListener('load', function () {
-      document.querySelectorAll(blockSelector).forEach(initBlock);
-    });
+      var rootSelector = itemConfig.rootSelector || itemConfig.blockSelector || '.uc-scroll-block';
+      var scrollSelector = itemConfig.scrollSelector || itemConfig.cardsSelector || '.cp-scroll-cards, .add_mob_scroll_indicator > div';
+      var dotsSelector = itemConfig.dotsSelector || '.scroll-indicator .dot';
+      var directMode = itemConfig.direct === true || itemConfig.rootSelector === null || itemConfig.blockSelector === null;
+
+      if (directMode) {
+        initPair(
+          null,
+          document.querySelector(scrollSelector),
+          document.querySelectorAll(dotsSelector),
+          itemConfig
+        );
+
+        return;
+      }
+
+      document.querySelectorAll(rootSelector).forEach(function (rootElement) {
+        initPair(
+          rootElement,
+          rootElement.querySelector(scrollSelector),
+          rootElement.querySelectorAll(dotsSelector),
+          itemConfig
+        );
+      });
+    }
+
+    function init() {
+      items.forEach(initByItem);
+    }
+
+    onReady(init);
+    window.addEventListener('load', init);
   };
 
-  /**
-   * Spacer
-   *
-   * window.cp_tpl.spacer();
-   */
   cp.spacer = function (config) {
     config = config || {};
 
     var allrecordsSelector = config.allrecordsSelector || '#allrecords';
-    var spacerSelector = config.spacerSelector || '.empty_spacer';
+    var className = config.className || config.class || 'empty_spacer';
+    var spacerSelector = config.spacerSelector || '.' + className.split(/\s+/)[0];
+    var bgColor = config.bgColor || config.backgroundColor || '';
     var safetyGap = typeof config.safetyGap === 'number' ? config.safetyGap : 0;
     var rafId = null;
 
@@ -1064,6 +1116,19 @@
       if (!allrecords) return {};
 
       var spacer = allrecords.querySelector(spacerSelector);
+
+      if (!spacer && config.create !== false) {
+        spacer = document.createElement('div');
+        spacer.className = className.indexOf('empty_spacer') === -1
+          ? 'empty_spacer ' + className
+          : className;
+
+        allrecords.appendChild(spacer);
+      }
+
+      if (spacer && bgColor) {
+        spacer.style.backgroundColor = bgColor;
+      }
 
       return {
         allrecords: allrecords,
@@ -1143,9 +1208,9 @@
           scheduleFit();
         });
 
-        toArray(allrecords.children).forEach(function (el) {
-          if (el !== spacer) {
-            resizeObserver.observe(el);
+        toArray(allrecords.children).forEach(function (element) {
+          if (element !== spacer) {
+            resizeObserver.observe(element);
           }
         });
       }
@@ -1167,11 +1232,6 @@
     };
   };
 
-  /**
-   * Switch blocks by triggers
-   *
-   * window.cp_tpl.switchBlocks();
-   */
   cp.switchBlocks = function (config) {
     config = config || {};
 
@@ -1240,9 +1300,9 @@
           triggers[index].classList.add(triggerActiveClass);
         }
 
-        mobileTriggers.forEach(function (trigger, i) {
+        mobileTriggers.forEach(function (trigger, fallbackIndex) {
           var match = trigger.className.match(/mob_trigger(\d+)/);
-          var triggerIndex = match ? parseInt(match[1], 10) - 1 : i;
+          var triggerIndex = match ? parseInt(match[1], 10) - 1 : fallbackIndex;
 
           if (triggerIndex === index) {
             trigger.classList.add(triggerActiveClass);
@@ -1264,22 +1324,22 @@
         }
       }
 
-      triggers.forEach(function (trigger, i) {
+      triggers.forEach(function (trigger, index) {
         if (trigger.dataset.cpTplSwitchInited) return;
 
         trigger.dataset.cpTplSwitchInited = '1';
         trigger.addEventListener('click', function () {
-          activate(i);
+          activate(index);
         });
       });
 
-      mobileTriggers.forEach(function (trigger, i) {
+      mobileTriggers.forEach(function (trigger, fallbackIndex) {
         if (trigger.dataset.cpTplSwitchInited) return;
 
         trigger.dataset.cpTplSwitchInited = '1';
 
         var match = trigger.className.match(/mob_trigger(\d+)/);
-        var index = match ? parseInt(match[1], 10) - 1 : i;
+        var index = match ? parseInt(match[1], 10) - 1 : fallbackIndex;
 
         trigger.addEventListener('click', function () {
           activate(index);
@@ -1301,14 +1361,6 @@
     };
   };
 
-  /**
-   * Copy with floating alert
-   *
-   * window.cp_tpl.copy({
-   *   selector: '.copy-promocode',
-   *   text: 'FRIDAY'
-   * });
-   */
   cp.copy = function (config) {
     config = config || {};
 
@@ -1349,16 +1401,16 @@
       return alert;
     }
 
-    function getTextToCopy(el) {
+    function getTextToCopy(element) {
       if (typeof text === 'function') {
-        return text(el);
+        return text(element);
       }
 
       if (text) {
         return text;
       }
 
-      return el.getAttribute('data-copy') || el.textContent.trim();
+      return element.getAttribute('data-copy') || element.textContent.trim();
     }
 
     function fallbackCopy(value) {
@@ -1373,7 +1425,7 @@
 
       try {
         document.execCommand('copy');
-      } catch (e) {}
+      } catch (error) {}
 
       document.body.removeChild(textarea);
     }
@@ -1390,9 +1442,9 @@
       return Promise.resolve();
     }
 
-    function showAlert(el) {
+    function showAlert(element) {
       var alert = getAlert();
-      var rect = el.getBoundingClientRect();
+      var rect = element.getBoundingClientRect();
       var alertHeight = alert.offsetHeight || 30;
 
       alert.textContent = alertText;
@@ -1409,16 +1461,16 @@
     }
 
     function init() {
-      document.querySelectorAll(selector).forEach(function (el) {
-        if (el.dataset.cpTplCopyInited) return;
+      document.querySelectorAll(selector).forEach(function (element) {
+        if (element.dataset.cpTplCopyInited) return;
 
-        el.dataset.cpTplCopyInited = '1';
+        element.dataset.cpTplCopyInited = '1';
 
-        el.addEventListener('click', function () {
-          var value = getTextToCopy(el);
+        element.addEventListener('click', function () {
+          var value = getTextToCopy(element);
 
           copyText(value).then(function () {
-            showAlert(el);
+            showAlert(element);
           });
         });
       });
@@ -1783,80 +1835,6 @@
 
 })(window, document);
 
-(function (window) {
-  'use strict';
-
-  var cp = window.cp_tpl = window.cp_tpl || {};
-  cp.forms = cp.forms || {};
-
-  function waitForSkyengTildaForms(callback, attempt) {
-    attempt = attempt || 0;
-
-    if (window.skyengTildaForms) {
-      callback(window.skyengTildaForms);
-      return;
-    }
-
-    if (attempt < 40) {
-      setTimeout(function () {
-        waitForSkyengTildaForms(callback, attempt + 1);
-      }, 250);
-      return;
-    }
-
-    console.error('[cp_tpl.forms.behavior] window.skyengTildaForms не найден.');
-  }
-
-  cp.forms.behavior = function (config) {
-    config = config || {};
-
-    var formSelector = config.formSelector;
-    var bumpSelector = config.bumpSelector;
-    var authFormSelector = config.authFormSelector;
-
-    waitForSkyengTildaForms(function (forms) {
-      var errors = forms.errors || {};
-
-      var bumpErrors = config.bumpErrors || [
-        errors.EMAIL_OR_PHONE_ALREADY_EXIST,
-        errors.ALREADY_LOGGED_IN,
-        errors.ALREADY_EXIST_ORDER
-      ];
-
-      forms.onError(function (error) {
-        if (bumpErrors.indexOf(error) !== -1) {
-          if (formSelector) forms.hideBlock(formSelector);
-          if (bumpSelector) forms.showBlock(bumpSelector);
-          return false;
-        }
-
-        return true;
-      });
-
-      forms.onSuccess(function () {
-        if (formSelector) forms.hideBlock(formSelector);
-        if (bumpSelector) forms.showBlock(bumpSelector);
-
-        if (typeof config.onSuccess === 'function') {
-          config.onSuccess();
-        }
-      });
-
-      forms.onSkyengUserChange(function (user) {
-        if (user) {
-          if (formSelector) forms.hideBlock(formSelector);
-          if (authFormSelector) forms.showBlock(authFormSelector);
-
-          if (typeof config.onAuthUser === 'function') {
-            config.onAuthUser(user);
-          }
-        }
-      });
-    });
-  };
-
-})(window);
-
 (function (window, document) {
   'use strict';
 
@@ -1865,6 +1843,7 @@
 
   var b2bState = {
     hitId: '',
+    hitPromise: null,
     timezone: ''
   };
 
@@ -1897,19 +1876,19 @@
     { num: '14', text: 'Pacific/Apia' }
   ];
 
-  function onReady(fn) {
+  function onReady(callback) {
     if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', fn);
+      document.addEventListener('DOMContentLoaded', callback);
     } else {
-      fn();
+      callback();
     }
   }
 
-  function cleanObject(obj) {
+  function cleanObject(object) {
     var result = {};
 
-    Object.keys(obj || {}).forEach(function (key) {
-      var value = obj[key];
+    Object.keys(object || {}).forEach(function (key) {
+      var value = object[key];
 
       if (value === undefined || value === null) return;
       if (typeof value === 'string' && value.trim() === '') return;
@@ -1932,6 +1911,9 @@
     var formData = new FormData(form);
 
     formData.forEach(function (value, key) {
+      if (value === undefined || value === null) return;
+      if (typeof value === 'string' && value.trim() === '') return;
+
       if (data[key]) {
         data[key] = Array.isArray(data[key])
           ? data[key].concat(value)
@@ -1982,7 +1964,7 @@
 
       if (closePopupLink) closePopupLink.click();
       if (thankyouLink) thankyouLink.click();
-    } catch (e) {}
+    } catch (error) {}
   }
 
   function addT396SuccessHandler(handler, config) {
@@ -1998,11 +1980,11 @@
 
     var original = window.t396_onSuccess;
 
-    window.t396_onSuccess = function (formObj) {
+    window.t396_onSuccess = function (formObject) {
       handler.call(this, {
-        form: formObj && formObj[0] ? formObj[0] : formObj,
-        formObj: formObj,
-        args: arguments
+        form: formObject && formObject[0] ? formObject[0] : formObject,
+        formObject: formObject,
+        callbackArguments: arguments
       });
 
       if (typeof original === 'function') {
@@ -2011,49 +1993,66 @@
     };
   }
 
+  function readHitOnce(globalName) {
+    try {
+      if (
+        window.skyengTrackHits &&
+        typeof window.skyengTrackHits.get_current_hit_id === 'function'
+      ) {
+        b2bState.hitId = window.skyengTrackHits.get_current_hit_id() || '';
+        window[globalName] = b2bState.hitId;
+
+        return b2bState.hitId;
+      }
+    } catch (error) {}
+
+    return b2bState.hitId || window[globalName] || '';
+  }
+
   cp.b2b.hit = function (config) {
     config = config || {};
 
-    var delay = typeof config.delay === 'number' ? config.delay : 2000;
-    var retries = typeof config.retries === 'number' ? config.retries : 10;
-    var retryDelay = typeof config.retryDelay === 'number' ? config.retryDelay : 500;
+    var delay = typeof config.delay === 'number' ? config.delay : 0;
+    var retries = typeof config.retries === 'number' ? config.retries : 20;
+    var retryDelay = typeof config.retryDelay === 'number' ? config.retryDelay : 250;
     var globalName = config.globalName || 'getHit';
-
-    function readHit(attempt) {
-      attempt = attempt || 0;
-
-      try {
-        if (
-          window.skyengTrackHits &&
-          typeof window.skyengTrackHits.get_current_hit_id === 'function'
-        ) {
-          b2bState.hitId = window.skyengTrackHits.get_current_hit_id() || '';
-          window[globalName] = b2bState.hitId;
-          return;
-        }
-      } catch (e) {}
-
-      if (attempt < retries) {
-        setTimeout(function () {
-          readHit(attempt + 1);
-        }, retryDelay);
-      }
-    }
 
     window[globalName] = window[globalName] || '';
 
-    onReady(function () {
+    function readHit(attempt, resolve) {
+      attempt = attempt || 0;
+
+      var hitId = readHitOnce(globalName);
+
+      if (hitId || attempt >= retries) {
+        resolve(hitId || '');
+        return;
+      }
+
       setTimeout(function () {
-        readHit(0);
-      }, delay);
+        readHit(attempt + 1, resolve);
+      }, retryDelay);
+    }
+
+    b2bState.hitPromise = new Promise(function (resolve) {
+      onReady(function () {
+        setTimeout(function () {
+          readHit(0, resolve);
+        }, delay);
+      });
     });
 
     return {
       get: function () {
-        return b2bState.hitId || window[globalName] || '';
+        return readHitOnce(globalName);
       },
+      ready: b2bState.hitPromise,
       refresh: function () {
-        readHit(0);
+        b2bState.hitPromise = new Promise(function (resolve) {
+          readHit(0, resolve);
+        });
+
+        return b2bState.hitPromise;
       }
     };
   };
@@ -2078,9 +2077,19 @@
   };
 
   cp.b2b.getMeta = function () {
+    readHitOnce('getHit');
+
     return cleanObject({
       hitId: b2bState.hitId || window.getHit,
       timezone: b2bState.timezone || window.getZone
+    });
+  };
+
+  cp.b2b.getMetaAsync = function () {
+    var hitPromise = b2bState.hitPromise || cp.b2b.hit().ready;
+
+    return hitPromise.then(function () {
+      return cp.b2b.getMeta();
     });
   };
 
@@ -2098,15 +2107,20 @@
     var openThankyou = config.openThankyou !== false;
     var redirectToLoginLink = config.redirectToLoginLink !== false;
 
-    function getGlobalMeta() {
-      return cleanObject({
-        hitId: b2bState.hitId || window.getHit,
-        timezone: b2bState.timezone || window.getZone
-      });
+    function isChildForm(form, payload) {
+      var childNameInput = form.querySelector('input[name="childName"]');
+      var childNameValue = childNameInput ? childNameInput.value : payload.childName;
+
+      if (childNameValue && String(childNameValue).trim() !== '') {
+        return true;
+      }
+
+      return payload.courseType === childCourseValue;
     }
 
-    function applyChildTutorsLogic(payload) {
-      if (payload.courseType !== childCourseValue) {
+    function applyChildFormLogic(form, payload) {
+      if (!isChildForm(form, payload)) {
+        delete payload.childName;
         return payload;
       }
 
@@ -2119,14 +2133,14 @@
       delete payload.phone;
 
       return cleanObject(Object.assign({}, payload, {
-        childName: 'Ребёнок',
+        childName: payload.childName || 'Ребёнок',
         parentName: name,
         parentEmail: email,
         parentPhone: phone
       }));
     }
 
-    function buildPayload(form) {
+    function buildPayload(form, globalMeta) {
       var formFields = getFormFields(form);
       var urlParams = getParamsFromUrl();
 
@@ -2135,14 +2149,14 @@
         formFields,
         urlParams,
         orderConfig,
-        getGlobalMeta()
+        globalMeta || cp.b2b.getMeta()
       );
 
       if (payload.phone) {
         payload.phone = normalizePhone(payload.phone);
       }
 
-      payload = applyChildTutorsLogic(payload);
+      payload = applyChildFormLogic(form, payload);
 
       if (typeof config.transformPayload === 'function') {
         payload = config.transformPayload(payload, {
@@ -2156,63 +2170,67 @@
     }
 
     function sendOrder(form) {
-      var payload = buildPayload(form);
+      return cp.b2b.getMetaAsync().then(function (globalMeta) {
+        var payload = buildPayload(form, globalMeta);
 
-      return fetch(apiUrl, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json; charset=UTF-8'
-        },
-        body: JSON.stringify(payload)
-      })
-        .then(function (response) {
-          if (!response.ok) {
-            throw response;
-          }
-
-          return response.json();
+        return fetch(apiUrl, {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json; charset=UTF-8'
+          },
+          body: JSON.stringify(payload)
         })
-        .then(function (data) {
-          var responseData = data && data.data ? data.data : {};
-          var wasBump = responseData.wasBump === true;
+          .then(function (response) {
+            if (!response.ok) {
+              throw response;
+            }
 
-          if (openThankyou) {
-            closeTildaPopupsAndOpenThankyou();
-          }
+            return response.json();
+          })
+          .then(function (data) {
+            var responseData = data && data.data ? data.data : {};
+            var wasBump = responseData.wasBump === true;
 
-          pushSuccessEvent(form.id, payload.serviceTypeKey, wasBump);
+            if (openThankyou) {
+              closeTildaPopupsAndOpenThankyou();
+            }
 
-          if (typeof config.onSuccess === 'function') {
-            config.onSuccess({
-              data: data,
-              responseData: responseData,
-              payload: payload,
-              form: form,
-              wasBump: wasBump
-            });
-          }
+            pushSuccessEvent(form.id, payload.serviceTypeKey, wasBump);
 
-          if (redirectToLoginLink && responseData.loginLink) {
-            window.location.href = responseData.loginLink;
-          }
+            if (typeof config.onSuccess === 'function') {
+              config.onSuccess({
+                data: data,
+                responseData: responseData,
+                payload: payload,
+                form: form,
+                wasBump: wasBump
+              });
+            }
 
-          return data;
-        })
-        .catch(function (error) {
-          console.error('[cp_tpl.b2b.order] custom form submit error', error);
+            if (redirectToLoginLink && responseData.loginLink) {
+              window.location.href = responseData.loginLink;
+            }
 
-          if (typeof config.onError === 'function') {
-            config.onError(error, {
-              payload: payload,
-              form: form
-            });
-          }
-        });
+            return data;
+          })
+          .catch(function (error) {
+            console.error('[cp_tpl.b2b.order] custom form submit error', error);
+
+            if (typeof config.onError === 'function') {
+              config.onError(error, {
+                form: form
+              });
+            }
+          });
+      });
     }
 
-    addT396SuccessHandler(function (ctx) {
-      var form = ctx.form;
+    cp.b2b.hit();
+    cp.b2b.zone();
+
+    addT396SuccessHandler(function (formSubmission) {
+      var form = formSubmission.form;
 
       if (!form) return;
 
@@ -2236,36 +2254,36 @@
   cp.cjm = cp.cjm || {};
 
   cp.cjm.products = [
-  {
-    brand: 'skysmart',
-    label: 'Английский язык',
-    selectValues: ['Английский', 'Английский язык', 'english'],
-    id: 'kid_mini_course_kids_english_junior',
-    selectedStk: 'mini_course_kids_english_junior'
-  },
-  {
-    brand: 'skyeng',
-    label: 'Английский язык',
-    selectValues: ['Английский', 'Английский язык', 'english'],
-    id: 'skyeng_adult_english_example',
-    selectedStk: 'english_adult_example'
-  },
-  {
-    brand: 'skysmart',
-    label: 'Математика',
-    selectValues: ['Математика', 'math'],
-    id: 'kid_mini_course_kids_math',
-    selectedStk: 'mini_course_kids_math'
-  },
-  {
-    brand: 'skysmart',
-    label: 'Домашний лицей 5-11 класс',
-    selectValues: ['Домашний лицей 5-11 класс'],
-    id: 'skysmart_homeschooling_8_grade8',
-    productKitCode: 'skysmart_homeschooling_8_grade',
-    kitTariffUuid: '639db64c-139f-4701-b41d-c6ab73614996'
-  }
-];
+    {
+      brand: 'skysmart',
+      label: 'Английский язык',
+      selectValues: ['Английский', 'Английский язык', 'english'],
+      id: 'kid_mini_course_kids_english_junior',
+      selectedStk: 'mini_course_kids_english_junior'
+    },
+    {
+      brand: 'skyeng',
+      label: 'Английский язык',
+      selectValues: ['Английский', 'Английский язык', 'english'],
+      id: 'skyeng_adult_english_example',
+      selectedStk: 'english_adult_example'
+    },
+    {
+      brand: 'skysmart',
+      label: 'Математика',
+      selectValues: ['Математика', 'math'],
+      id: 'kid_mini_course_kids_math',
+      selectedStk: 'mini_course_kids_math'
+    },
+    {
+      brand: 'skysmart',
+      label: 'Домашний лицей 5-11 класс',
+      selectValues: ['Домашний лицей 5-11 класс'],
+      id: 'skysmart_homeschooling_8_grade8',
+      productKitCode: 'skysmart_homeschooling_8_grade',
+      kitTariffUuid: '639db64c-139f-4701-b41d-c6ab73614996'
+    }
+  ];
 
 })(window);
 
@@ -2274,14 +2292,14 @@
 
   var cp = window.cp_tpl = window.cp_tpl || {};
   cp.cjm = cp.cjm || {};
-
   cp.cjm.products = cp.cjm.products || [];
+  cp.cjm.pageProducts = cp.cjm.pageProducts || [];
 
-  function onReady(fn) {
+  function onReady(callback) {
     if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', fn);
+      document.addEventListener('DOMContentLoaded', callback);
     } else {
-      fn();
+      callback();
     }
   }
 
@@ -2313,6 +2331,10 @@
       .replace(/\s+/g, ' ');
   }
 
+  function hasValue(value) {
+    return value != null && value !== '';
+  }
+
   function getClosestDataAttr(element, attrName) {
     var current = element;
 
@@ -2327,27 +2349,11 @@
     return '';
   }
 
-  function getSelectContext(select) {
-    var selectedOption = select.options[select.selectedIndex];
-
-    return {
-      brand:
-        select.getAttribute('data-cp-brand') ||
-        getClosestDataAttr(select, 'data-cp-brand'),
-
-      mode:
-        select.getAttribute('data-cp-mode') ||
-        getClosestDataAttr(select, 'data-cp-mode'),
-
-      productId:
-        selectedOption && selectedOption.getAttribute('data-cp-product-id'),
-
-      selectedValue: select.value,
-
-      selectedLabel: selectedOption
-        ? selectedOption.textContent.trim()
-        : select.value
-    };
+  function getAllProducts(customProducts) {
+    return []
+      .concat(customProducts || [])
+      .concat(cp.cjm.pageProducts || [])
+      .concat(cp.cjm.products || []);
   }
 
   function productToEasyPaymentConfig(product) {
@@ -2371,11 +2377,11 @@
     return result;
   }
 
-  function getProductConfigurations() {
+  function getProductConfigurations(customProducts) {
     var usedIds = {};
     var result = [];
 
-    cp.cjm.products.forEach(function (product) {
+    getAllProducts(customProducts).forEach(function (product) {
       if (!product.id || usedIds[product.id]) return;
 
       usedIds[product.id] = true;
@@ -2385,22 +2391,71 @@
     return result;
   }
 
-  function matchByProductId(context) {
+  function getSelectContext(select) {
+    var selectedOption = select.options[select.selectedIndex];
+
+    return {
+      brand:
+        select.getAttribute('data-cp-brand') ||
+        getClosestDataAttr(select, 'data-cp-brand'),
+
+      mode:
+        select.getAttribute('data-cp-mode') ||
+        getClosestDataAttr(select, 'data-cp-mode'),
+
+      productId:
+        selectedOption && selectedOption.getAttribute('data-cp-product-id') ||
+        select.getAttribute('data-cp-product-id') ||
+        getClosestDataAttr(select, 'data-cp-product-id'),
+
+      selectedValue: select.value,
+
+      selectedLabel: selectedOption
+        ? selectedOption.textContent.trim()
+        : select.value
+    };
+  }
+
+  function getElementContext(element) {
+    return {
+      brand:
+        element.getAttribute('data-cp-brand') ||
+        getClosestDataAttr(element, 'data-cp-brand'),
+
+      productId:
+        element.getAttribute('data-cp-product-id') ||
+        getClosestDataAttr(element, 'data-cp-product-id'),
+
+      selectedValue:
+        element.getAttribute('data-cp-value') ||
+        element.getAttribute('data-cp-product-value') ||
+        getClosestDataAttr(element, 'data-cp-value') ||
+        '',
+
+      selectedLabel:
+        element.getAttribute('data-cp-label') ||
+        element.textContent && element.textContent.trim() ||
+        ''
+    };
+  }
+
+  function matchByProductId(context, customProducts) {
     if (!context.productId) return null;
 
-    return cp.cjm.products.find(function (product) {
+    return getAllProducts(customProducts).find(function (product) {
       return product.id === context.productId;
     }) || null;
   }
 
-  function matchByBrandAndValue(context) {
+  function matchByBrandAndValue(context, customProducts) {
     var brand = context.brand;
     var selectedValue = normalizeValue(context.selectedValue);
     var selectedLabel = normalizeValue(context.selectedLabel);
+    var products = getAllProducts(customProducts);
 
     if (!selectedValue && !selectedLabel) return null;
 
-    var candidates = cp.cjm.products.filter(function (product) {
+    var candidates = products.filter(function (product) {
       if (brand && product.brand !== brand) {
         return false;
       }
@@ -2414,29 +2469,19 @@
       });
     });
 
-    if (candidates.length === 1) {
+    if (candidates.length) {
       return candidates[0];
-    }
-
-    if (candidates.length > 1) {
-      console.warn(
-        '[cp_tpl.cjm] Найдено несколько продуктов. Добавь data-cp-brand на форму/обёртку или data-cp-product-id на option.',
-        {
-          context: context,
-          candidates: candidates
-        }
-      );
-
-      return null;
     }
 
     return null;
   }
 
-  function resolveProduct(select) {
-    var context = getSelectContext(select);
+  function resolveProductByContext(context, customProducts) {
+    return matchByProductId(context, customProducts) || matchByBrandAndValue(context, customProducts);
+  }
 
-    return matchByProductId(context) || matchByBrandAndValue(context);
+  function resolveProduct(select, customProducts) {
+    return resolveProductByContext(getSelectContext(select), customProducts);
   }
 
   function getOrCreateHiddenInput(form, name) {
@@ -2497,6 +2542,22 @@
     return location.search.slice(1);
   }
 
+  function initConsultationButton(options) {
+    options = options || {};
+
+    if (!options.product || !options.selector) return;
+
+    window.easyPaymentFlow.initConsultationButton({
+      selector: options.selector,
+      analyticsData: options.analyticsData || {
+        blockName: options.blockName || options.selector
+      },
+      productConfigId: options.product.id,
+      utmMarks: getUtmMarks(options.extraParams),
+      comment: options.comment || ''
+    });
+  }
+
   function initAuthButton(select, product, config) {
     if (!product) return;
 
@@ -2505,14 +2566,12 @@
       ? config.getAuthButtonSelector(select, product)
       : '.' + name + '-btn';
 
-    window.easyPaymentFlow.initConsultationButton({
+    initConsultationButton({
       selector: selector,
-      analyticsData: {
-        blockName: name
-      },
-      productConfigId: product.id,
-      utmMarks: getUtmMarks(config.extraParams),
-      comment: config.comment || ''
+      product: product,
+      blockName: name,
+      extraParams: config.extraParams,
+      comment: config.comment
     });
   }
 
@@ -2526,7 +2585,6 @@
     if (name.indexOf(config.authPrefix) === 0) return 'auth';
     if (name.indexOf(config.anonymousPrefix) === 0) return 'anonymous';
 
-    // Если select лежит внутри формы с data-cp-brand, считаем его обычным неавторизованным select.
     if (context.brand || context.productId) return 'anonymous';
 
     return '';
@@ -2548,7 +2606,7 @@
 
     if (!shouldHandleSelect(select, context, config)) return;
 
-    var product = resolveProduct(select);
+    var product = resolveProduct(select, config.products);
 
     if (!product) {
       console.warn('[cp_tpl.cjm] Продукт не найден для select:', select);
@@ -2566,14 +2624,115 @@
     }
   }
 
+  function normalizeButtonConfig(buttonConfig) {
+    if (typeof buttonConfig === 'string') {
+      return {
+        selector: buttonConfig
+      };
+    }
+
+    return buttonConfig || {};
+  }
+
+  function initConfiguredButton(buttonConfig, config) {
+    buttonConfig = normalizeButtonConfig(buttonConfig);
+
+    var element = document.querySelector(buttonConfig.selector);
+
+    var context = {
+      brand: buttonConfig.brand,
+      productId: buttonConfig.productId,
+      selectedValue: buttonConfig.value || buttonConfig.selectedValue,
+      selectedLabel: buttonConfig.label || buttonConfig.selectedLabel
+    };
+
+    if (element) {
+      context = Object.assign(getElementContext(element), cleanContext(context));
+    }
+
+    var product = buttonConfig.product || resolveProductByContext(context, config.products);
+
+    if (!product) {
+      console.warn('[cp_tpl.cjm] Продукт не найден для кнопки:', buttonConfig);
+      return;
+    }
+
+    initConsultationButton({
+      selector: buttonConfig.selector,
+      product: product,
+      analyticsData: buttonConfig.analyticsData,
+      blockName: buttonConfig.blockName,
+      extraParams: buttonConfig.extraParams || config.extraParams,
+      comment: buttonConfig.comment || config.comment
+    });
+  }
+
+  function cleanContext(context) {
+    var result = {};
+
+    Object.keys(context || {}).forEach(function (key) {
+      if (hasValue(context[key])) result[key] = context[key];
+    });
+
+    return result;
+  }
+
+  function initDataButtons(config) {
+    var selector = config.buttonSelector || '[data-cp-cjm-button], [data-cp-product-id][data-cp-button], [data-cp-product-id].cp-cjm-button';
+
+    document.querySelectorAll(selector).forEach(function (element) {
+      var context = getElementContext(element);
+      var product = resolveProductByContext(context, config.products);
+
+      if (!product) {
+        console.warn('[cp_tpl.cjm] Продукт не найден для data-кнопки:', element);
+        return;
+      }
+
+      var uniqueClass = element.getAttribute('data-cp-cjm-generated-class');
+
+      if (!uniqueClass) {
+        uniqueClass = 'cp-cjm-button-' + Math.random().toString(36).slice(2);
+        element.classList.add(uniqueClass);
+        element.setAttribute('data-cp-cjm-generated-class', uniqueClass);
+      }
+
+      initConsultationButton({
+        selector: '.' + uniqueClass,
+        product: product,
+        blockName: element.getAttribute('data-cp-block-name') || uniqueClass,
+        extraParams: config.extraParams,
+        comment: element.getAttribute('data-cp-comment') || config.comment
+      });
+    });
+  }
+
+  cp.cjm.addProducts = function (products) {
+    cp.cjm.pageProducts = cp.cjm.pageProducts.concat(products || []);
+  };
+
+  cp.cjm.initButton = function (buttonConfig) {
+    waitForEasyPaymentFlow(function () {
+      initConfiguredButton(buttonConfig, {
+        products: buttonConfig && buttonConfig.products,
+        extraParams: buttonConfig && buttonConfig.extraParams,
+        comment: buttonConfig && buttonConfig.comment
+      });
+    });
+  };
+
   cp.cjm.init = function (config) {
     config = config || {};
 
     config.authPrefix = config.authPrefix || 'auth';
     config.anonymousPrefix = config.anonymousPrefix || 'unauth';
 
+    if (Array.isArray(config.products)) {
+      cp.cjm.addProducts(config.products);
+    }
+
     waitForEasyPaymentFlow(function () {
-      window.easyPaymentFlow.initProductConfigurations(getProductConfigurations());
+      window.easyPaymentFlow.initProductConfigurations(getProductConfigurations(config.products));
 
       if (!cp.cjm._changeHandlerBound) {
         cp.cjm._changeHandlerBound = true;
@@ -2588,6 +2747,18 @@
           document.querySelectorAll(config.scanSelector || 'select').forEach(function (select) {
             handleSelectChange({ target: select }, config);
           });
+        });
+      }
+
+      if (Array.isArray(config.buttons)) {
+        config.buttons.forEach(function (buttonConfig) {
+          initConfiguredButton(buttonConfig, config);
+        });
+      }
+
+      if (config.scanButtons !== false) {
+        onReady(function () {
+          initDataButtons(config);
         });
       }
     });
