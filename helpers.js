@@ -1,4 +1,4 @@
-// cp_tpl core modules
+// cp_tpl core modules v3
 
 (function (window, document) {
   'use strict';
@@ -1017,6 +1017,23 @@
 
       registryTarget.dataset.cpTplScrollIndicatorInited = '1';
 
+      var dotsContainer = dots[0] ? dots[0].parentElement : null;
+
+      function applyDefaultStyles() {
+        if (itemConfig.applyStyles === false) return;
+
+        if (itemConfig.hideScrollbar !== false) {
+          scrollElement.style.scrollbarWidth = 'none';
+          scrollElement.style.msOverflowStyle = 'none';
+        }
+
+        if (dotsContainer && itemConfig.styleDots !== false) {
+          dotsContainer.style.display = itemConfig.dotsDisplay || 'flex';
+          dotsContainer.style.justifyContent = itemConfig.dotsJustify || 'center';
+          dotsContainer.style.gap = itemConfig.dotsGap || '8px';
+        }
+      }
+
       function updateDots() {
         var scrollLeft = scrollElement.scrollLeft;
         var maxScrollLeft = scrollElement.scrollWidth - scrollElement.clientWidth;
@@ -1045,10 +1062,9 @@
         updateDots();
       }
 
+      applyDefaultStyles();
       scrollElement.addEventListener('scroll', updateDots);
       updateDots();
-
-      var dotsContainer = dots[0] ? dots[0].parentElement : null;
 
       if (shouldStartInMiddle(rootElement, scrollElement, dotsContainer, itemConfig)) {
         requestAnimationFrame(scrollToMiddle);
@@ -1577,9 +1593,10 @@
     ].join(',');
 
     var inputsBoxSelector = config.inputsBoxSelector || '.t-form__inputsbox';
-    var quietTime = config.quietTime || 1500;
+    var quietTime = typeof config.quietTime === 'number' ? config.quietTime : 0;
     var maxWait = config.maxWait || 15000;
     var globalName = config.globalName || 'selectedFormIds';
+    var waitForStableDom = config.waitForStableDom === true;
 
     var observer = null;
     var quietTimer = null;
@@ -1627,9 +1644,13 @@
     function finish(reason) {
       if (isFinished) return;
 
-      isFinished = true;
-
       var formIds = syncSelectedFormIds();
+
+      if (!formIds.length && reason !== 'достигнут MAX_WAIT') {
+        return;
+      }
+
+      isFinished = true;
 
       if (observer) observer.disconnect();
       clearTimeout(quietTimer);
@@ -1656,6 +1677,11 @@
       if (!forms.length) return;
 
       clearTimeout(quietTimer);
+
+      if (!waitForStableDom && quietTime <= 0) {
+        finish('формы найдены');
+        return;
+      }
 
       quietTimer = setTimeout(function () {
         finish('DOM стабилизировался');
@@ -1827,8 +1853,15 @@
       return;
     }
 
+    if (Array.isArray(window[globalName]) && window[globalName].length) {
+      initForForms(window[globalName]);
+      return;
+    }
+
     cp.forms.selectAll({
       globalName: globalName,
+      quietTime: typeof config.selectAllQuietTime === 'number' ? config.selectAllQuietTime : 0,
+      waitForStableDom: config.waitForStableDom === true,
       onReady: initForForms
     });
   };
@@ -2335,6 +2368,66 @@
     return value != null && value !== '';
   }
 
+  function getHiddenFieldsValues() {
+    if (cp.hiddenFields && typeof cp.hiddenFields.getValues === 'function') {
+      return cp.hiddenFields.getValues();
+    }
+
+    return {};
+  }
+
+  function getCjmComment(options) {
+    options = options || {};
+
+    if (hasValue(options.comment)) {
+      return options.comment;
+    }
+
+    if (options.extraParams && hasValue(options.extraParams.comment)) {
+      return options.extraParams.comment;
+    }
+
+    var hiddenFields = getHiddenFieldsValues();
+
+    if (hasValue(hiddenFields.comment)) {
+      return hiddenFields.comment;
+    }
+
+    return '';
+  }
+
+  function warnDuplicateProductIds(products, sourceName, config) {
+    products = products || [];
+    config = config || {};
+
+    var groups = {};
+
+    getAllProducts(products).forEach(function (product, index) {
+      if (!product || !product.id) return;
+
+      groups[product.id] = groups[product.id] || [];
+      groups[product.id].push({
+        product: product,
+        index: index
+      });
+    });
+
+    Object.keys(groups).forEach(function (id) {
+      if (groups[id].length <= 1) return;
+
+      var message = '[cp_tpl.cjm] Дублируется product id "' + id + '". Первый продукт с этим id будет иметь приоритет, остальные могут быть проигнорированы.';
+
+      console.error(message, {
+        source: sourceName || 'products',
+        duplicates: groups[id]
+      });
+
+      if (config.alertOnDuplicateIds === true && window.alert) {
+        window.alert(message);
+      }
+    });
+  }
+
   function getClosestDataAttr(element, attrName) {
     var current = element;
 
@@ -2554,7 +2647,7 @@
       },
       productConfigId: options.product.id,
       utmMarks: getUtmMarks(options.extraParams),
-      comment: options.comment || ''
+      comment: getCjmComment(options)
     });
   }
 
@@ -2707,8 +2800,17 @@
     });
   }
 
-  cp.cjm.addProducts = function (products) {
-    cp.cjm.pageProducts = cp.cjm.pageProducts.concat(products || []);
+  cp.cjm.addProducts = function (products, config) {
+    products = Array.isArray(products) ? products : [];
+    config = config || {};
+
+    warnDuplicateProductIds(products, 'cjm.addProducts', config);
+
+    cp.cjm.pageProducts = cp.cjm.pageProducts.concat(products);
+  };
+
+  cp.cjm.validateProducts = function (products, config) {
+    warnDuplicateProductIds(products || [], 'cjm.validateProducts', config || {});
   };
 
   cp.cjm.initButton = function (buttonConfig) {
@@ -2728,7 +2830,7 @@
     config.anonymousPrefix = config.anonymousPrefix || 'unauth';
 
     if (Array.isArray(config.products)) {
-      cp.cjm.addProducts(config.products);
+      warnDuplicateProductIds(config.products, 'cjm.init products', config);
     }
 
     waitForEasyPaymentFlow(function () {
