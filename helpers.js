@@ -1,4 +1,4 @@
-// cp_tpl core modules v3
+// cp_tpl core modules v4
 
 (function (window, document) {
   'use strict';
@@ -2140,15 +2140,40 @@
     var openThankyou = config.openThankyou !== false;
     var redirectToLoginLink = config.redirectToLoginLink !== false;
 
-    function isChildForm(form, payload) {
-      var childNameInput = form.querySelector('input[name="childName"]');
-      var childNameValue = childNameInput ? childNameInput.value : payload.childName;
+    function createFormSnapshot(form) {
+      return {
+        form: form,
+        formId: form && form.id ? form.id : '',
+        formFields: form ? getFormFields(form) : {},
+        urlParams: getParamsFromUrl()
+      };
+    }
 
-      if (childNameValue && String(childNameValue).trim() !== '') {
+    function normalizeFormSnapshot(formOrSnapshot) {
+      if (formOrSnapshot && formOrSnapshot.formFields) {
+        return formOrSnapshot;
+      }
+
+      return createFormSnapshot(formOrSnapshot);
+    }
+
+    function isChildForm(form, payload) {
+      var payloadChildName = payload && payload.childName;
+
+      if (payloadChildName && String(payloadChildName).trim() !== '') {
         return true;
       }
 
-      return payload.courseType === childCourseValue;
+      if (form && form.querySelector) {
+        var childNameInput = form.querySelector('input[name="childName"]');
+        var childNameInputValue = childNameInput ? childNameInput.value : '';
+
+        if (childNameInputValue && String(childNameInputValue).trim() !== '') {
+          return true;
+        }
+      }
+
+      return payload && payload.courseType === childCourseValue;
     }
 
     function applyChildFormLogic(form, payload) {
@@ -2173,9 +2198,11 @@
       }));
     }
 
-    function buildPayload(form, globalMeta) {
-      var formFields = getFormFields(form);
-      var urlParams = getParamsFromUrl();
+    function buildPayload(formOrSnapshot, globalMeta) {
+      var formSnapshot = normalizeFormSnapshot(formOrSnapshot);
+      var form = formSnapshot.form;
+      var formFields = formSnapshot.formFields || {};
+      var urlParams = formSnapshot.urlParams || {};
 
       var payload = Object.assign(
         {},
@@ -2194,6 +2221,7 @@
       if (typeof config.transformPayload === 'function') {
         payload = config.transformPayload(payload, {
           form: form,
+          formSnapshot: formSnapshot,
           formFields: formFields,
           urlParams: urlParams
         }) || payload;
@@ -2202,9 +2230,13 @@
       return cleanObject(payload);
     }
 
-    function sendOrder(form) {
+    function sendOrder(formOrSnapshot) {
+      var formSnapshot = normalizeFormSnapshot(formOrSnapshot);
+      var form = formSnapshot.form;
+      var payload = null;
+
       return cp.b2b.getMetaAsync().then(function (globalMeta) {
-        var payload = buildPayload(form, globalMeta);
+        payload = buildPayload(formSnapshot, globalMeta);
 
         return fetch(apiUrl, {
           method: 'POST',
@@ -2229,7 +2261,7 @@
               closeTildaPopupsAndOpenThankyou();
             }
 
-            pushSuccessEvent(form.id, payload.serviceTypeKey, wasBump);
+            pushSuccessEvent(formSnapshot.formId, payload.serviceTypeKey, wasBump);
 
             if (typeof config.onSuccess === 'function') {
               config.onSuccess({
@@ -2237,6 +2269,7 @@
                 responseData: responseData,
                 payload: payload,
                 form: form,
+                formSnapshot: formSnapshot,
                 wasBump: wasBump
               });
             }
@@ -2252,7 +2285,9 @@
 
             if (typeof config.onError === 'function') {
               config.onError(error, {
-                form: form
+                form: form,
+                formSnapshot: formSnapshot,
+                payload: payload
               });
             }
           });
@@ -2267,13 +2302,16 @@
 
       if (!form) return;
 
-      sendOrder(form);
+      var formSnapshot = createFormSnapshot(form);
+
+      sendOrder(formSnapshot);
     }, {
       stage: 'before'
     });
 
     return {
       buildPayload: buildPayload,
+      createFormSnapshot: createFormSnapshot,
       send: sendOrder
     };
   };
