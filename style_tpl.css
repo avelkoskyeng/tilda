@@ -5,3 +5,6 @@ body {
     font-weight: 400;
     font-feature-settings: 'pnum' on, 'lnum' on;
     }
+.t-checkbox__indicator {
+        border-radius: 4px;
+    }
