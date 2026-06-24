@@ -1,4 +1,4 @@
-// cp_tpl core modules v6
+// cp_tpl core modules v7
 
 (function (window, document) {
   'use strict';
@@ -1769,6 +1769,252 @@
       },
       finish: finish
     };
+  };
+
+})(window, document);
+
+
+(function (window, document) {
+  'use strict';
+
+  var cp = window.cp_tpl = window.cp_tpl || {};
+  cp.forms = cp.forms || {};
+
+  function toArray(value) {
+    if (!value) return [];
+
+    if (Array.isArray(value)) {
+      return value;
+    }
+
+    if (typeof value === 'string') {
+      return value.split(',').map(function (item) {
+        return item.trim();
+      }).filter(Boolean);
+    }
+
+    if (value.length && typeof value !== 'function' && !value.nodeType) {
+      return Array.prototype.slice.call(value);
+    }
+
+    return [value];
+  }
+
+  function unique(values) {
+    var seen = {};
+    var result = [];
+
+    values.forEach(function (value) {
+      if (!value || seen[value]) return;
+
+      seen[value] = true;
+      result.push(value);
+    });
+
+    return result;
+  }
+
+  function getElementFromString(value) {
+    var trimmed = String(value || '').trim();
+
+    if (!trimmed) return null;
+
+    if (trimmed.charAt(0) !== '#' && trimmed.charAt(0) !== '.' && trimmed.indexOf('[') === -1) {
+      var byId = document.getElementById(trimmed);
+
+      if (byId) return byId;
+    }
+
+    try {
+      return document.querySelector(trimmed.charAt(0) === '#' || trimmed.charAt(0) === '.' || trimmed.indexOf('[') !== -1
+        ? trimmed
+        : '#' + trimmed
+      );
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function getClosestRecord(element) {
+    var current = element;
+
+    while (current && current !== document) {
+      if (current.id && /^rec\d+/.test(current.id)) {
+        return current;
+      }
+
+      current = current.parentNode;
+    }
+
+    return null;
+  }
+
+  function getRecordSelectorFromItem(item) {
+    if (!item) return '';
+
+    if (typeof item === 'string') {
+      var trimmed = item.trim();
+
+      if (/^#?rec\d+/.test(trimmed)) {
+        return trimmed.charAt(0) === '#' ? trimmed : '#' + trimmed;
+      }
+
+      var elementFromString = getElementFromString(trimmed);
+
+      if (!elementFromString) return '';
+
+      return getRecordSelectorFromItem(elementFromString);
+    }
+
+    if (item.nodeType === 1) {
+      if (item.id && /^rec\d+/.test(item.id)) {
+        return '#' + item.id;
+      }
+
+      var recordElement = getClosestRecord(item);
+
+      if (recordElement && recordElement.id) {
+        return '#' + recordElement.id;
+      }
+    }
+
+    return '';
+  }
+
+  function waitForPageDataShare(config) {
+    config = config || {};
+
+    var timeout = typeof config.timeout === 'number' ? config.timeout : 10000;
+    var interval = typeof config.interval === 'number' ? config.interval : 250;
+    var startedAt = Date.now();
+
+    return new Promise(function (resolve, reject) {
+      function check() {
+        if (
+          window.skyengTildaPageDataShare &&
+          typeof window.skyengTildaPageDataShare.getData === 'function'
+        ) {
+          resolve(window.skyengTildaPageDataShare);
+          return;
+        }
+
+        if (Date.now() - startedAt >= timeout) {
+          reject(new Error('window.skyengTildaPageDataShare.getData не найден'));
+          return;
+        }
+
+        setTimeout(check, interval);
+      }
+
+      check();
+    });
+  }
+
+  function initCustomerIntegration(config) {
+    config = config || {};
+
+    if (config.initIntegration === false) {
+      return;
+    }
+
+    if (
+      window.skyengTildaCustomerIntegration &&
+      typeof window.skyengTildaCustomerIntegration.init === 'function'
+    ) {
+      window.skyengTildaCustomerIntegration.init();
+    }
+  }
+
+  function applyFieldsMap(pageDataShare, config) {
+    config = config || {};
+
+    if (!config.fieldsMap) {
+      return;
+    }
+
+    if (config.mergeFieldsMap === false) {
+      pageDataShare.fieldsMap = config.fieldsMap;
+      return;
+    }
+
+    pageDataShare.fieldsMap = Object.assign(
+      {},
+      pageDataShare.fieldsMap || {},
+      config.fieldsMap
+    );
+  }
+
+  function normalizeConfig(formIdsOrConfig, config) {
+    if (
+      formIdsOrConfig &&
+      typeof formIdsOrConfig === 'object' &&
+      !Array.isArray(formIdsOrConfig) &&
+      !formIdsOrConfig.nodeType
+    ) {
+      config = formIdsOrConfig;
+      formIdsOrConfig = config.formIds || config.forms || config.ids || config.items;
+    }
+
+    config = config || {};
+
+    return {
+      formIds: formIdsOrConfig,
+      config: config
+    };
+  }
+
+  cp.forms.fillData = function (formIdsOrConfig, config) {
+    var normalized = normalizeConfig(formIdsOrConfig, config);
+    var options = normalized.config;
+    var globalName = options.globalName || 'selectedFormIds';
+
+    var items = toArray(normalized.formIds);
+
+    if (!items.length && Array.isArray(window[globalName])) {
+      items = window[globalName].slice();
+    }
+
+    var recordSelectors = unique(items.map(getRecordSelectorFromItem).filter(Boolean));
+
+    if (!recordSelectors.length) {
+      console.warn('[cp_tpl.forms.fillData] Не удалось найти zero-block records для форм.', {
+        formIds: items
+      });
+
+      return Promise.resolve([]);
+    }
+
+    return waitForPageDataShare(options)
+      .then(function (pageDataShare) {
+        initCustomerIntegration(options);
+        applyFieldsMap(pageDataShare, options);
+
+        recordSelectors.forEach(function (recordSelector) {
+          pageDataShare.getData(recordSelector);
+        });
+
+        if (options.debug === true) {
+          console.log('[cp_tpl.forms.fillData] getData вызван для records:', recordSelectors);
+        }
+
+        if (typeof options.onReady === 'function') {
+          options.onReady(recordSelectors);
+        }
+
+        return recordSelectors;
+      })
+      .catch(function (error) {
+        console.error('[cp_tpl.forms.fillData]', error);
+
+        if (typeof options.onError === 'function') {
+          options.onError(error, {
+            formIds: items,
+            recordSelectors: recordSelectors
+          });
+        }
+
+        return recordSelectors;
+      });
   };
 
 })(window, document);
