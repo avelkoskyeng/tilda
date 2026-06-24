@@ -1,4 +1,4 @@
-// cp_tpl core modules v4
+// cp_tpl core modules v6
 
 (function (window, document) {
   'use strict';
@@ -415,6 +415,46 @@
     onReady(applyLogo);
   };
 
+  function getHiddenFieldDomValue(fieldName) {
+    var inputs = document.querySelectorAll('input[name]');
+    var firstMatchedValue;
+    var hasMatchedInput = false;
+
+    toArray(inputs).some(function (input) {
+      if (input.name !== fieldName) {
+        return false;
+      }
+
+      if (!hasMatchedInput) {
+        hasMatchedInput = true;
+        firstMatchedValue = input.value;
+      }
+
+      if (hasValue(input.value)) {
+        firstMatchedValue = input.value;
+        return true;
+      }
+
+      return false;
+    });
+
+    return hasMatchedInput ? firstMatchedValue : undefined;
+  }
+
+  function getCurrentHiddenFieldsValues() {
+    var result = Object.assign({}, cp.hiddenFieldsState.values || {});
+
+    Object.keys(result).forEach(function (fieldName) {
+      var domValue = getHiddenFieldDomValue(fieldName);
+
+      if (domValue !== undefined) {
+        result[fieldName] = domValue;
+      }
+    });
+
+    return result;
+  }
+
   cp.hiddenFields = function (fields, config) {
     fields = fields || {};
     config = config || {};
@@ -422,6 +462,7 @@
     var formSelector = config.formSelector || 'form';
     var boxSelector = config.boxSelector || '.t-form__inputsbox';
     var observe = config.observe !== false;
+    var overwriteExisting = config.overwriteExisting === true || config.force === true;
     var observer = null;
 
     cp.hiddenFieldsState.values = Object.assign({}, cp.hiddenFieldsState.values, fields);
@@ -432,6 +473,24 @@
         cp.hiddenFieldsState.utmMarksMap,
         config.utmMarksMap
       );
+    }
+
+    function initInputValue(input, value) {
+      if (overwriteExisting) {
+        input.value = value;
+        input.dataset.cpTplHiddenFieldsInited = '1';
+        return;
+      }
+
+      if (input.dataset.cpTplHiddenFieldsInited === '1') {
+        return;
+      }
+
+      if (!hasValue(input.value)) {
+        input.value = value;
+      }
+
+      input.dataset.cpTplHiddenFieldsInited = '1';
     }
 
     function apply() {
@@ -446,7 +505,7 @@
             box.appendChild(input);
           }
 
-          input.value = fields[name];
+          initInputValue(input, fields[name]);
         });
       });
     }
@@ -472,7 +531,7 @@
   };
 
   cp.hiddenFields.getValues = function () {
-    return Object.assign({}, cp.hiddenFieldsState.values);
+    return getCurrentHiddenFieldsValues();
   };
 
   var t396Wrapped = false;
@@ -584,7 +643,7 @@
 
   function getHiddenFieldsForUtmMarks() {
     var result = {};
-    var fields = cp.hiddenFieldsState.values || {};
+    var fields = getCurrentHiddenFieldsValues();
     var map = cp.hiddenFieldsState.utmMarksMap || {};
 
     Object.keys(fields).forEach(function (fieldName) {
