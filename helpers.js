@@ -1,4 +1,4 @@
-// cp_tpl core modules v7
+// cp_tpl core modules v8
 
 (function (window, document) {
   'use strict';
@@ -2629,37 +2629,305 @@
   var cp = window.cp_tpl = window.cp_tpl || {};
   cp.cjm = cp.cjm || {};
 
-  cp.cjm.products = [
-    {
-      brand: 'skysmart',
-      label: 'Английский язык',
-      selectValues: ['Английский', 'Английский язык', 'english'],
-      id: 'kid_mini_course_kids_english_junior',
-      selectedStk: 'mini_course_kids_english_junior'
-    },
-    {
-      brand: 'skyeng',
-      label: 'Английский язык',
-      selectValues: ['Английский', 'Английский язык', 'english'],
-      id: 'skyeng_adult_english_example',
-      selectedStk: 'english_adult_example'
-    },
-    {
-      brand: 'skysmart',
-      label: 'Математика',
-      selectValues: ['Математика', 'math'],
-      id: 'kid_mini_course_kids_math',
-      selectedStk: 'mini_course_kids_math'
-    },
-    {
-      brand: 'skysmart',
-      label: 'Домашний лицей 5-11 класс',
-      selectValues: ['Домашний лицей 5-11 класс'],
-      id: 'skysmart_homeschooling_8_grade8',
-      productKitCode: 'skysmart_homeschooling_8_grade',
-      kitTariffUuid: '639db64c-139f-4701-b41d-c6ab73614996'
-    }
-  ];
+    cp.cjm.products = [{
+            brand: 'skysmart',
+            label: 'Английский язык',
+            selectValues: ['Английский', 'Английский язык', 'english'],
+            id: 'kid_mini_course_kids_english_junior',
+            selectedStk: 'mini_course_kids_english_junior'
+        },
+        {
+            brand: 'skysmart',
+            label: 'Английский язык',
+            selectValues: ['Английский', 'Английский язык', 'english'],
+            id: 'kid_english_junior_not_native_speaker_premium',
+            selectedStk: 'english_junior_not_native_speaker_premium'
+        },
+        {
+            brand: 'skysmart',
+            label: 'Математика',
+            selectValues: ['Математика', 'math'],
+            id: 'kid_mini_course_kids_math',
+            selectedStk: 'mini_course_kids_math'
+        },
+        {
+            brand: 'skysmart',
+            label: 'Домашний лицей 5-11 класс',
+            selectValues: ['Домашний лицей 5-11 класс'],
+            id: 'kid_skysmart_homeschooling_5_11_grade',
+            productKitCode: 'skysmart_homeschooling_8_grade',
+            kitTariffUuid: '639db64c-139f-4701-b41d-c6ab73614996'
+        },
+        {
+            brand: 'skysmart',
+            label: 'Греческий',
+            selectValues: ['Греческий', 'greek'],
+            id: 'kid_greek_junior_not_native_speaker_premium',
+            selectedStk: 'greek_junior_not_native_speaker_premium'
+        },
+        {
+            brand: 'skyeng',
+            label: 'Греческий',
+            selectValues: ['Греческий', 'greek'],
+            id: 'adult_greek_not_native_speaker_premium',
+            selectedStk: 'greek_adult_not_native_speaker_premium'
+        },
+        {
+            brand: 'skysmart',
+            label: 'Испанский',
+            selectValues: ['Испанский', 'spanish'],
+            id: 'kid_spanish_junior_not_native_speaker_premium',
+            selectedStk: 'spanish_junior_not_native_speaker_premium'
+        },
+        {
+            brand: 'skyeng',
+            label: 'Испанский',
+            selectValues: ['Испанский', 'spanish'],
+            id: 'adult_spanish_not_native_speaker_premium',
+            selectedStk: 'spanish_adult_not_native_speaker_premium'
+        },
+        {
+            brand: 'skysmart',
+            label: 'Итальянский',
+            selectValues: ['Итальянский', 'italian'],
+            id: 'kid_italian_junior_not_native_speaker_premium',
+            selectedStk: 'italian_junior_not_native_speaker_premium'
+        },
+        {
+            brand: 'skyeng',
+            label: 'Итальянский',
+            selectValues: ['Итальянский', 'italian'],
+            id: 'adult_italian_not_native_speaker_premium',
+            selectedStk: 'italian_adult_not_native_speaker_premium'
+        },
+        {
+            brand: 'skysmart',
+            label: 'Китайский',
+            selectValues: ['Китайский', 'chinese'],
+            id: 'kid_chinese_junior_not_native_speaker_premium',
+            selectedStk: 'chinese_junior_not_native_speaker_premium'
+        },
+        {
+            brand: 'skyeng',
+            label: 'Китайский',
+            selectValues: ['Китайский', 'chinese'],
+            id: 'adult_chinese_not_native_speaker_premium',
+            selectedStk: 'chinese_adult_not_native_speaker_premium'
+        },
+        {
+            brand: 'skysmart',
+            label: 'Корейский',
+            selectValues: ['Корейский', 'korean'],
+            id: 'kid_korean_junior_not_native_speaker_premium',
+            selectedStk: 'korean_junior_not_native_speaker_premium'
+        },
+        {
+            brand: 'skyeng',
+            label: 'Корейский',
+            selectValues: ['Корейский', 'korean'],
+            id: 'adult_korean_not_native_speaker_premium',
+            selectedStk: 'korean_adult_not_native_speaker_premium'
+        },
+        {
+            brand: 'skysmart',
+            label: 'Немецкий',
+            selectValues: ['Немецкий', 'german'],
+            id: 'kid_german_junior_not_native_speaker_premium',
+            selectedStk: 'german_junior_not_native_speaker_premium'
+        },
+        {
+            brand: 'skyeng',
+            label: 'Немецкий',
+            selectValues: ['Немецкий', 'german'],
+            id: 'adult_german_not_native_speaker_premium',
+            selectedStk: 'german_adult_not_native_speaker_premium'
+        },
+        {
+            brand: 'skysmart',
+            label: 'Португальский',
+            selectValues: ['Португальский', 'portuguese'],
+            id: 'kid_portuguese_junior_not_native_speaker_premium',
+            selectedStk: 'portuguese_junior_not_native_speaker_premium'
+        },
+        {
+            brand: 'skyeng',
+            label: 'Португальский',
+            selectValues: ['Португальский', 'portuguese'],
+            id: 'adult_portuguese_not_native_speaker_premium',
+            selectedStk: 'portuguese_adult_not_native_speaker_premium'
+        },
+        {
+            brand: 'skysmart',
+            label: 'Турецкий',
+            selectValues: ['Турецкий', 'turkish'],
+            id: 'kid_turkish_junior_not_native_speaker_premium',
+            selectedStk: 'turkish_junior_not_native_speaker_premium'
+        },
+        {
+            brand: 'skyeng',
+            label: 'Турецкий',
+            selectValues: ['Турецкий', 'turkish'],
+            id: 'adult_turkish_not_native_speaker_premium',
+            selectedStk: 'turkish_adult_not_native_speaker_premium'
+        },
+        {
+            brand: 'skysmart',
+            label: 'Французский',
+            selectValues: ['Французский', 'french'],
+            id: 'kid_french_junior_not_native_speaker_premium',
+            selectedStk: 'french_junior_not_native_speaker_premium'
+        },
+        {
+            brand: 'skyeng',
+            label: 'Французский',
+            selectValues: ['Французский', 'french'],
+            id: 'adult_french_not_native_speaker_premium',
+            selectedStk: 'french_adult_not_native_speaker_premium'
+        },
+        {
+            brand: 'skysmart',
+            label: 'Японский',
+            selectValues: ['Японский', 'japanese'],
+            id: 'kid_japanese_junior_not_native_speaker_premium',
+            selectedStk: 'japanese_junior_not_native_speaker_premium'
+        },
+        {
+            brand: 'skyeng',
+            label: 'Японский',
+            selectValues: ['Японский', 'japanese'],
+            id: 'adult_japanese_not_native_speaker_premium',
+            selectedStk: 'japanese_adult_not_native_speaker_premium'
+        },
+        {
+            brand: 'skyeng',
+            label: 'Английский',
+            selectValues: ['Английский', 'english'],
+            id: 'adult_english_not_native_speaker_premium',
+            selectedStk: 'english_adult_not_native_speaker_premium'
+        },
+        {
+            brand: 'skyeng',
+            label: 'Английский',
+            selectValues: ['Английский', 'english'],
+            id: 'adult_english_adult_not_native_speaker_course_elementary',
+            selectedStk: 'english_adult_not_native_speaker_course_elementary'
+        },
+        {
+            id: 'kid_mini_course_kids_russian',
+            label: 'Русский язык',
+            selectValues: ['Русский', 'Русский язык', 'russian'],
+            selectedStk: 'mini_course_kids_russian'
+        },
+        {
+            id: 'kid_mini_course_kids_social_science',
+            label: 'Обществознание',
+            selectValues: ['Обществознание', 'social science'],
+            selectedStk: 'mini_course_kids_social_science'
+        },
+        {
+            id: 'kid_mini_course_kids_physics',
+            label: 'Физика',
+            selectValues: ['Физика', 'physics'],
+            selectedStk: 'mini_course_kids_physics'
+        },
+        {
+            id: 'kid_mini_course_kids_chemistry',
+            label: 'Химия',
+            selectValues: ['Химия', 'chemistry'],
+            selectedStk: 'mini_course_kids_chemistry'
+        },
+        {
+            id: 'kid_mini_course_cc_python_kids_pl',
+            label: 'Программирование',
+            selectValues: ['Программирование', 'programming'],
+            selectedStk: 'mini_course_cc_python_kids_pl'
+        },
+        {
+            id: 'kid_math_kids_exam_premium',
+            label: 'Подготовка к ЕГЭ и ОГЭ',
+            selectValues: ['Подготовка к ЕГЭ и ОГЭ', 'ЕГЭ', 'ОГЭ', 'exam'],
+            selectedStk: 'math_kids_exam_premium'
+        },
+        {
+            id: 'kid_preschool_kids_f2f',
+            label: 'Дошкольная подготовка',
+            selectValues: ['Дошкольная подготовка', 'preschool'],
+            selectedStk: 'preschool_kids_f2f'
+        },
+        {
+            id: 'kid_languages_other',
+            label: 'Другие иностранные языки',
+            selectValues: ['Другие иностранные языки', 'other languages'],
+            selectedStk: 'french_junior_not_native_speaker_premium'
+        },
+        {
+            id: 'kid_skysmart_homeschooling_8_grade',
+            label: 'Домашний лицей 5-11 класс',
+            selectValues: ['Домашний лицей 5-11 класс'],
+            productKitCode: 'skysmart_homeschooling_8_grade',
+            kitTariffUuid: '0d57ce9b-3d43-47e6-9fa7-a81e081a4ce1'
+        },
+        {
+            id: 'kid_lc_exam_ege_webinar_sprint26',
+            label: 'ЕГЭ',
+            selectValues: ['ЕГЭ', 'exam'],
+            selectedStk: '',
+            nativeStk: '',
+            productKitCode: 'lc_exam_ege_webinar_sprint26',
+            kitTariffUuid: '2686aa95-95e4-48fe-9fbc-6b3d2654ca58'
+        },
+        {
+            id: 'kid_lc_exam_oge_webinar_sprint26',
+            label: 'ОГЭ',
+            selectValues: ['ОГЭ', 'exam'],
+            selectedStk: '',
+            nativeStk: '',
+            productKitCode: 'lc_exam_oge_webinar_sprint26',
+            kitTariffUuid: 'e3dcc4f2-eb19-4c2f-8329-789f5243b70a'
+        },
+        {
+            id: 'kid_skysmart_homeschooling_5_grade',
+            label: '5 класс',
+            selectValues: ['Домашний лицей 5-11 класс'],
+            productKitCode: 'skysmart_homeschooling_5_grade',
+            kitTariffUuid: '6e84a51e-181d-4515-b70c-4ee834120730'
+        },
+        {
+            id: 'kid_skysmart_homeschooling_6_grade',
+            label: '6 класс',
+            selectValues: ['Домашний лицей 5-11 класс'],
+            productKitCode: 'skysmart_homeschooling_6_grade',
+            kitTariffUuid: '866bec87-e956-4c26-9155-06b1566458a5'
+        },
+        {
+            id: 'kid_skysmart_homeschooling_7_grade',
+            label: '7 класс',
+            selectValues: ['Домашний лицей 5-11 класс'],
+            productKitCode: 'skysmart_homeschooling_7_grade',
+            kitTariffUuid: '2a3c7dbc-30c2-428d-82dc-4869fd640010'
+        },
+        {
+            id: 'kid_skysmart_homeschooling_9_grade',
+            label: '9 класс',
+            selectValues: ['Домашний лицей 5-11 класс'],
+            productKitCode: 'skysmart_homeschooling_9_grade',
+            kitTariffUuid: 'e9f472bc-b86a-426f-b7f4-2dbca44b8b07'
+        },
+        {
+            id: 'kid_skysmart_homeschooling_10_grade',
+            label: '10 класс',
+            selectValues: ['Домашний лицей 5-11 класс'],
+            productKitCode: 'skysmart_homeschooling_10_grade',
+            kitTariffUuid: 'a1272ff1-6129-419c-b405-bc70cc9f9021'
+        },
+        {
+            id: 'kid_skysmart_homeschooling_11_grade',
+            label: '11 класс',
+            selectValues: ['Домашний лицей 5-11 класс'],
+            productKitCode: 'skysmart_homeschooling_11_grade',
+            kitTariffUuid: 'ec3fd476-c0f0-44e8-a6c7-14c337bcbd53'
+        }
+    ];
 
 })(window);
 
@@ -2785,11 +3053,37 @@
     return '';
   }
 
-  function getAllProducts(customProducts) {
-    return []
-      .concat(customProducts || [])
-      .concat(cp.cjm.pageProducts || [])
-      .concat(cp.cjm.products || []);
+  function getCustomProducts(configOrProducts) {
+    if (Array.isArray(configOrProducts)) {
+      return configOrProducts;
+    }
+
+    return configOrProducts && Array.isArray(configOrProducts.products)
+      ? configOrProducts.products
+      : [];
+  }
+
+  function getProductSources(configOrProducts) {
+    return [
+      {
+        name: 'cjm.init products',
+        products: getCustomProducts(configOrProducts)
+      },
+      {
+        name: 'cjm.addProducts pageProducts',
+        products: cp.cjm.pageProducts || []
+      },
+      {
+        name: 'default cp.cjm.products',
+        products: cp.cjm.products || []
+      }
+    ];
+  }
+
+  function getAllProducts(configOrProducts) {
+    return getProductSources(configOrProducts).reduce(function (result, source) {
+      return result.concat(source.products || []);
+    }, []);
   }
 
   function productToEasyPaymentConfig(product) {
@@ -2813,11 +3107,11 @@
     return result;
   }
 
-  function getProductConfigurations(customProducts) {
+  function getProductConfigurations(configOrProducts) {
     var usedIds = {};
     var result = [];
 
-    getAllProducts(customProducts).forEach(function (product) {
+    getAllProducts(configOrProducts).forEach(function (product) {
       if (!product.id || usedIds[product.id]) return;
 
       usedIds[product.id] = true;
@@ -2827,10 +3121,140 @@
     return result;
   }
 
-  function getSelectContext(select) {
+  function getFormFieldValue(form, names) {
+    if (!form || !form.querySelector) return '';
+
+    names = Array.isArray(names) ? names : [names];
+
+    for (var i = 0; i < names.length; i++) {
+      var name = names[i];
+      var input = form.querySelector('input[name="' + name + '"], select[name="' + name + '"], textarea[name="' + name + '"]');
+
+      if (input && hasValue(input.value)) {
+        return input.value;
+      }
+    }
+
+    return '';
+  }
+
+  function getProductIdFieldNames(config) {
+    config = config || {};
+
+    var names = [
+      config.productIdFieldName,
+      'cjmProductId',
+      'productConfigId',
+      'cpProductId'
+    ].filter(Boolean);
+
+    return names.filter(function (name, index) {
+      return names.indexOf(name) === index;
+    });
+  }
+
+  function getProductIdFromForm(form, config) {
+    return getFormFieldValue(form, getProductIdFieldNames(config));
+  }
+
+  function getMapProductId(mapValue) {
+    if (!mapValue) return '';
+
+    if (typeof mapValue === 'string') {
+      return mapValue;
+    }
+
+    if (typeof mapValue === 'object') {
+      return mapValue.productId || mapValue.id || mapValue.value || '';
+    }
+
+    return '';
+  }
+
+  function getMappedProductIdFromMap(map, select) {
+    if (!map || !select) return '';
+
+    var selectedOption = select.options && select.options[select.selectedIndex];
+    var selectedValue = select.value;
+    var selectedLabel = selectedOption ? selectedOption.textContent.trim() : selectedValue;
+
+    var keys = [
+      selectedValue,
+      selectedLabel,
+      normalizeValue(selectedValue),
+      normalizeValue(selectedLabel)
+    ];
+
+    for (var i = 0; i < keys.length; i++) {
+      var key = keys[i];
+
+      if (key && Object.prototype.hasOwnProperty.call(map, key)) {
+        return getMapProductId(map[key]);
+      }
+    }
+
+    return '';
+  }
+
+  function resolveProductIdFromMaps(select, config) {
+    config = config || {};
+
+    var maps = [];
+
+    if (config.productIdMap) {
+      maps.push({
+        map: config.productIdMap
+      });
+    }
+
+    if (Array.isArray(config.productIdMaps)) {
+      maps = maps.concat(config.productIdMaps);
+    }
+
+    for (var i = 0; i < maps.length; i++) {
+      var item = maps[i] || {};
+      var selector = item.selectSelector || item.selector;
+
+      if (selector && (!select.matches || !select.matches(selector))) {
+        continue;
+      }
+
+      var productId = getMappedProductIdFromMap(item.map || item.values || {}, select);
+
+      if (productId) {
+        return productId;
+      }
+    }
+
+    return '';
+  }
+
+  function setFormProductId(form, productId, config) {
+    if (!form || !productId) return;
+
+    var fieldName = (config && config.productIdFieldName) || 'cjmProductId';
+    var input = getOrCreateHiddenInput(form, fieldName);
+
+    setVal(input, productId);
+  }
+
+  function applyProductIdMapToSelect(select, config) {
+    var productId = resolveProductIdFromMaps(select, config);
+
+    if (!productId) return '';
+
+    setFormProductId(select.closest('form'), productId, config);
+
+    return productId;
+  }
+
+  function getSelectContext(select, config) {
     var selectedOption = select.options[select.selectedIndex];
+    var form = select.closest ? select.closest('form') : null;
 
     return {
+      form: form,
+
       brand:
         select.getAttribute('data-cp-brand') ||
         getClosestDataAttr(select, 'data-cp-brand'),
@@ -2842,7 +3266,8 @@
       productId:
         selectedOption && selectedOption.getAttribute('data-cp-product-id') ||
         select.getAttribute('data-cp-product-id') ||
-        getClosestDataAttr(select, 'data-cp-product-id'),
+        getClosestDataAttr(select, 'data-cp-product-id') ||
+        getProductIdFromForm(form, config),
 
       selectedValue: select.value,
 
@@ -2852,15 +3277,20 @@
     };
   }
 
-  function getElementContext(element) {
+  function getElementContext(element, config) {
+    var form = element.closest ? element.closest('form') : null;
+
     return {
+      form: form,
+
       brand:
         element.getAttribute('data-cp-brand') ||
         getClosestDataAttr(element, 'data-cp-brand'),
 
       productId:
         element.getAttribute('data-cp-product-id') ||
-        getClosestDataAttr(element, 'data-cp-product-id'),
+        getClosestDataAttr(element, 'data-cp-product-id') ||
+        getProductIdFromForm(form, config),
 
       selectedValue:
         element.getAttribute('data-cp-value') ||
@@ -2875,49 +3305,103 @@
     };
   }
 
-  function matchByProductId(context, customProducts) {
+  function matchByProductId(context, configOrProducts) {
     if (!context.productId) return null;
 
-    return getAllProducts(customProducts).find(function (product) {
-      return product.id === context.productId;
-    }) || null;
+    var sources = getProductSources(configOrProducts);
+    var matched = null;
+
+    sources.some(function (source) {
+      matched = (source.products || []).find(function (product) {
+        return product.id === context.productId;
+      }) || null;
+
+      return Boolean(matched);
+    });
+
+    if (!matched) {
+      console.warn('[cp_tpl.cjm] Продукт с таким productId не найден:', context.productId, {
+        context: context
+      });
+    }
+
+    return matched;
   }
 
-  function matchByBrandAndValue(context, customProducts) {
-    var brand = context.brand;
+  function getValueCandidates(context) {
     var selectedValue = normalizeValue(context.selectedValue);
     var selectedLabel = normalizeValue(context.selectedLabel);
-    var products = getAllProducts(customProducts);
+    var values = [];
 
-    if (!selectedValue && !selectedLabel) return null;
+    if (selectedValue) values.push(selectedValue);
+    if (selectedLabel && selectedLabel !== selectedValue) values.push(selectedLabel);
 
-    var candidates = products.filter(function (product) {
-      if (brand && product.brand !== brand) {
+    return values;
+  }
+
+  function productMatchesValue(product, normalizedValues) {
+    var values = product.selectValues || [product.label];
+
+    return values.some(function (value) {
+      return normalizedValues.indexOf(normalizeValue(value)) !== -1;
+    });
+  }
+
+  function findOneProductCandidate(source, context) {
+    var brand = context.brand;
+    var normalizedValues = getValueCandidates(context);
+
+    if (!normalizedValues.length) return null;
+
+    var candidates = (source.products || []).filter(function (product) {
+      if (brand && product.brand && product.brand !== brand) {
         return false;
       }
 
-      var values = product.selectValues || [product.label];
+      if (brand && !product.brand) {
+        return false;
+      }
 
-      return values.some(function (value) {
-        var normalized = normalizeValue(value);
-
-        return normalized === selectedValue || normalized === selectedLabel;
-      });
+      return productMatchesValue(product, normalizedValues);
     });
 
-    if (candidates.length) {
+    if (candidates.length === 1) {
       return candidates[0];
+    }
+
+    if (candidates.length > 1) {
+      console.error('[cp_tpl.cjm] Найдено несколько продуктов для одного выбора. Уточни продукт через cjmProductId, productIdMap или data-cp-product-id.', {
+        source: source.name,
+        context: context,
+        candidates: candidates
+      });
     }
 
     return null;
   }
 
-  function resolveProductByContext(context, customProducts) {
-    return matchByProductId(context, customProducts) || matchByBrandAndValue(context, customProducts);
+  function matchByBrandAndValue(context, configOrProducts) {
+    var sources = getProductSources(configOrProducts);
+    var matched = null;
+
+    sources.some(function (source) {
+      matched = findOneProductCandidate(source, context);
+      return Boolean(matched);
+    });
+
+    return matched;
   }
 
-  function resolveProduct(select, customProducts) {
-    return resolveProductByContext(getSelectContext(select), customProducts);
+  function resolveProductByContext(context, configOrProducts) {
+    if (context.productId) {
+      return matchByProductId(context, configOrProducts);
+    }
+
+    return matchByBrandAndValue(context, configOrProducts);
+  }
+
+  function resolveProduct(select, configOrProducts) {
+    return resolveProductByContext(getSelectContext(select, configOrProducts), configOrProducts);
   }
 
   function getOrCreateHiddenInput(form, name) {
@@ -2961,9 +3445,14 @@
       ? getOrCreateHiddenInput(form, 'tariffUuid')
       : form.querySelector('input[name="tariffUuid"]');
 
+    var cjmProductId = createHiddenFields
+      ? getOrCreateHiddenInput(form, config.productIdFieldName || 'cjmProductId')
+      : form.querySelector('input[name="' + (config.productIdFieldName || 'cjmProductId') + '"]');
+
     setVal(serviceTypeKey, product.selectedStk);
     setVal(productKitCode, product.productKitCode);
     setVal(tariffUuid, product.kitTariffUuid);
+    setVal(cjmProductId, product.id);
 
     if (typeof config.onFillForm === 'function') {
       config.onFillForm(form, product, select);
@@ -3036,16 +3525,19 @@
     return Boolean(getSelectMode(select, context, config));
   }
 
-  function handleSelectChange(event, config) {
-    var select = event.target;
-    var context = getSelectContext(select);
+  function handleSelectChangeNow(select, config) {
+    applyProductIdMapToSelect(select, config);
+
+    var context = getSelectContext(select, config);
 
     if (!shouldHandleSelect(select, context, config)) return;
 
-    var product = resolveProduct(select, config.products);
+    var product = resolveProductByContext(context, config);
 
     if (!product) {
-      console.warn('[cp_tpl.cjm] Продукт не найден для select:', select);
+      console.warn('[cp_tpl.cjm] Продукт не найден для select:', select, {
+        context: context
+      });
       return;
     }
 
@@ -3058,6 +3550,17 @@
     if (mode === 'auth') {
       initAuthButton(select, product, config);
     }
+  }
+
+  function handleSelectChange(event, config) {
+    var select = event.target;
+    var resolveDelay = typeof config.resolveDelay === 'number' ? config.resolveDelay : 0;
+
+    if (!select || select.tagName !== 'SELECT') return;
+
+    window.setTimeout(function () {
+      handleSelectChangeNow(select, config);
+    }, resolveDelay);
   }
 
   function normalizeButtonConfig(buttonConfig) {
@@ -3083,10 +3586,10 @@
     };
 
     if (element) {
-      context = Object.assign(getElementContext(element), cleanContext(context));
+      context = Object.assign(getElementContext(element, config), cleanContext(context));
     }
 
-    var product = buttonConfig.product || resolveProductByContext(context, config.products);
+    var product = buttonConfig.product || resolveProductByContext(context, config);
 
     if (!product) {
       console.warn('[cp_tpl.cjm] Продукт не найден для кнопки:', buttonConfig);
@@ -3117,8 +3620,8 @@
     var selector = config.buttonSelector || '[data-cp-cjm-button], [data-cp-product-id][data-cp-button], [data-cp-product-id].cp-cjm-button';
 
     document.querySelectorAll(selector).forEach(function (element) {
-      var context = getElementContext(element);
-      var product = resolveProductByContext(context, config.products);
+      var context = getElementContext(element, config);
+      var product = resolveProductByContext(context, config);
 
       if (!product) {
         console.warn('[cp_tpl.cjm] Продукт не найден для data-кнопки:', element);
@@ -3161,7 +3664,8 @@
       initConfiguredButton(buttonConfig, {
         products: buttonConfig && buttonConfig.products,
         extraParams: buttonConfig && buttonConfig.extraParams,
-        comment: buttonConfig && buttonConfig.comment
+        comment: buttonConfig && buttonConfig.comment,
+        productIdFieldName: buttonConfig && buttonConfig.productIdFieldName
       });
     });
   };
@@ -3177,7 +3681,7 @@
     }
 
     waitForEasyPaymentFlow(function () {
-      window.easyPaymentFlow.initProductConfigurations(getProductConfigurations(config.products));
+      window.easyPaymentFlow.initProductConfigurations(getProductConfigurations(config));
 
       if (!cp.cjm._changeHandlerBound) {
         cp.cjm._changeHandlerBound = true;
