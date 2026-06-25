@@ -1,3 +1,6 @@
 title: cp_tpl docs
 description: Документация по JS-хелперам для Tilda
 theme: minima
+
+minima:
+  skin: dark
