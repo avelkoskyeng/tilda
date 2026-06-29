@@ -1,4 +1,9 @@
 title: cp_tpl docs
-description: Документация по JS-хелперам для Tilda
+description: Документация по JS-хелперам helpers.js для Tilda
 theme: jekyll-theme-midnight
 show_downloads: false
+
+markdown: kramdown
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
