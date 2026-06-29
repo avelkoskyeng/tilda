@@ -1,35 +1,68 @@
-// Расширяем контентную область Just the Docs.
-// На больших экранах документация становится заметно шире,
-// но на ноутбуках и мобильных остаётся адаптивной.
+// cp_tpl docs layout override for Just the Docs
+// Фиксируем левую навигацию и растягиваем контент по ширине экрана.
 
-.main {
-  max-width: none;
-}
+$cp-sidebar-width: 280px;
 
-.main-content-wrap {
-  max-width: none;
-}
+@media (min-width: 50rem) {
+  .side-bar {
+    width: $cp-sidebar-width !important;
+    min-width: $cp-sidebar-width !important;
+    max-width: $cp-sidebar-width !important;
+    align-items: stretch !important;
+  }
 
-.main-content {
-  max-width: min(1440px, calc(100vw - 360px));
-  margin-left: 0;
-  margin-right: auto;
+  .site-header {
+    width: $cp-sidebar-width !important;
+    min-width: $cp-sidebar-width !important;
+    max-width: $cp-sidebar-width !important;
+  }
+
+  .site-title {
+    padding-left: 24px !important;
+    padding-right: 20px !important;
+  }
+
+  .site-nav {
+    width: $cp-sidebar-width !important;
+    min-width: $cp-sidebar-width !important;
+    max-width: $cp-sidebar-width !important;
+    padding-left: 24px !important;
+    padding-right: 16px !important;
+  }
+
+  .main {
+    margin-left: $cp-sidebar-width !important;
+    max-width: none !important;
+  }
+
+  .main-header {
+    left: $cp-sidebar-width !important;
+    width: calc(100% - #{$cp-sidebar-width}) !important;
+  }
+
+  .main-content-wrap {
+    max-width: none !important;
+    padding-left: 40px !important;
+    padding-right: 56px !important;
+  }
+
+  .main-content {
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
 }
 
 @media (min-width: 1600px) {
-  .main-content {
-    max-width: min(1680px, calc(100vw - 420px));
+  .main-content-wrap {
+    padding-left: 48px !important;
+    padding-right: 72px !important;
   }
 }
 
 @media (min-width: 2200px) {
-  .main-content {
-    max-width: min(1920px, calc(100vw - 480px));
-  }
-}
-
-@media (max-width: 799px) {
-  .main-content {
-    max-width: none;
+  .main-content-wrap {
+    padding-left: 56px !important;
+    padding-right: 96px !important;
   }
 }
