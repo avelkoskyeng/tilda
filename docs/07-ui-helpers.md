@@ -1,3 +1,8 @@
+---
+layout: default
+title: UI-хелперы
+nav_order: 8
+---
 # UI-хелперы
 
 ## `window.cp_tpl.marquee(config)`

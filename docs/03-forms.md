@@ -1,3 +1,8 @@
+---
+layout: default
+title: Формы
+nav_order: 4
+---
 # Формы
 
 В этой главе описаны методы из `window.cp_tpl.forms`.

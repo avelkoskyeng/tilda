@@ -1,3 +1,8 @@
+---
+layout: default
+title: CJM и продукты
+nav_order: 6
+---
 # CJM и продукты
 
 CJM-модуль работает с `window.easyPaymentFlow` и продуктовым каталогом `window.cp_tpl.cjm.products`.

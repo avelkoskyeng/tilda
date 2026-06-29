@@ -1,7 +1,31 @@
 title: cp_tpl docs
 description: Документация по JS-хелперам helpers.js для Tilda
-theme: jekyll-theme-midnight
-show_downloads: false
+
+# GitHub Pages project site
+url: "https://avelkoskyeng.github.io"
+baseurl: "/tilda"
+
+# Docs theme
+remote_theme: just-the-docs/just-the-docs
+color_scheme: dark
+search_enabled: true
+heading_anchors: true
+
+# Top-right links
+aux_links:
+  GitHub:
+    - "https://github.com/avelkoskyeng/tilda"
+  helpers.js:
+    - "https://github.com/avelkoskyeng/tilda/blob/main/helpers.js"
+aux_links_new_tab: true
+
+# Footer
+footer_content: "cp_tpl docs · JS-хелперы для Tilda"
+last_edit_timestamp: false
+
+# GitHub Pages needs this plugin for remote_theme
+plugins:
+  - jekyll-remote-theme
 
 markdown: kramdown
 kramdown:

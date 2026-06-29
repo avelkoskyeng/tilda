@@ -1,3 +1,8 @@
+---
+layout: default
+title: Рецепты
+nav_order: 11
+---
 # Рецепты и частые сценарии
 
 ## Televox + selectAll

@@ -1,3 +1,8 @@
+---
+layout: default
+title: B2B order
+nav_order: 7
+---
 # B2B order
 
 Модуль `window.cp_tpl.b2b` помогает собрать данные формы и отправить их в B2B API.

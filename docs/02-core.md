@@ -1,3 +1,8 @@
+---
+layout: default
+title: Core helpers
+nav_order: 3
+---
 # Core helpers
 
 В этой главе описаны базовые методы, которые не привязаны к конкретной форме или CJM.

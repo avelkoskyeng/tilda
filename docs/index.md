@@ -1,6 +1,15 @@
+---
+layout: home
+title: cp_tpl docs
+nav_order: 1
+permalink: /
+---
 # cp_tpl docs
 
 `cp_tpl` — JS-библиотека для Tilda-лендингов. Она собирает в одном `helpers.js` типовые сценарии: GTM, адаптивный `zoom`, логотипы, hidden-поля, UTM, Televox, B2B order, CJM/easyPaymentFlow, скролл-индикаторы, медиа-хелперы и мелкие UI-утилиты.
+
+
+> Документация оформлена как GitHub Pages-сайт на Just the Docs Dark: слева навигация по главам, сверху поиск по всем страницам.
 
 ## Оглавление
 

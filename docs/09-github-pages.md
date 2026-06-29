@@ -1,4 +1,11 @@
+---
+layout: default
+title: GitHub Pages
+nav_order: 10
+---
 # GitHub Pages и публикация документации
+
+Эта документация рассчитана на публикацию из папки `/docs` через GitHub Pages.
 
 ## Рекомендуемая структура
 
@@ -16,14 +23,11 @@ docs/
   08-service-scripts.md
   09-github-pages.md
   10-recipes.md
-  assets/
-    css/
-      style.scss
 helpers.js
 readme.md
 ```
 
-## Настройки Pages
+## Настройки GitHub Pages
 
 В GitHub:
 
@@ -36,43 +40,105 @@ readme.md
 
 После этого `docs/index.md` станет главной страницей сайта.
 
-## Тема
+Для проекта `avelkoskyeng/tilda` адрес будет таким:
 
-В `_config.yml` используется тёмная тема:
+```txt
+https://avelkoskyeng.github.io/tilda/
+```
+
+## Тема Just the Docs Dark
+
+В `_config.yml` используется Just the Docs в тёмной теме:
 
 ```yml
 title: cp_tpl docs
 description: Документация по JS-хелперам helpers.js для Tilda
-theme: jekyll-theme-midnight
-show_downloads: false
+
+url: "https://avelkoskyeng.github.io"
+baseurl: "/tilda"
+
+remote_theme: just-the-docs/just-the-docs
+color_scheme: dark
+search_enabled: true
+heading_anchors: true
+
+aux_links:
+  GitHub:
+    - "https://github.com/avelkoskyeng/tilda"
+  helpers.js:
+    - "https://github.com/avelkoskyeng/tilda/blob/main/helpers.js"
+aux_links_new_tab: true
+
+plugins:
+  - jekyll-remote-theme
 ```
 
-Дополнительные стили лежат в:
+`remote_theme` подключает тему из GitHub-репозитория темы. `plugins: jekyll-remote-theme` нужен GitHub Pages, чтобы собрать сайт с remote theme.
+
+## Навигация
+
+Каждая страница в `docs` начинается с front matter:
+
+```md
+---
+layout: default
+title: Формы
+nav_order: 4
+---
+```
+
+`title` — название в боковом меню.
+
+`nav_order` — порядок в навигации.
+
+Главная страница использует layout `home`:
+
+```md
+---
+layout: home
+title: cp_tpl docs
+nav_order: 1
+permalink: /
+---
+```
+
+## Что удалить из старой версии
+
+Если раньше пробовали другие темы, можно удалить:
 
 ```txt
+docs/assets/main.scss
+docs/assets/css/dark.css
 docs/assets/css/style.scss
+docs/_includes/custom-head.html
 ```
 
-Файл должен начинаться с front matter:
-
-```scss
----
----
-
-@import "{{ site.theme }}";
-```
-
-Без `--- ---` Jekyll может не обработать Sass-файл.
+Для Just the Docs Dark эти файлы не нужны.
 
 ## Проверка после деплоя
 
-1. Открыть опубликованный сайт.
-2. Сделать hard refresh: `Cmd/Ctrl + Shift + R`.
-3. В DevTools проверить, что подключился CSS темы.
-4. Если изменения не появились — дождаться окончания GitHub Pages deploy в Actions/Pages.
+1. Дождаться завершения Pages deploy.
+2. Открыть опубликованный сайт.
+3. Сделать hard refresh: `Cmd/Ctrl + Shift + R`.
+4. Проверить, что слева появилась боковая навигация Just the Docs.
+5. Проверить поиск в верхней части страницы.
 
-## Что не надо делать
+## Частые проблемы
 
-- Не настраивать Pages на `/(root)`, если документация лежит в `/docs`.
-- Не держать разные версии `index.md` в root и `/docs`, если можно запутаться, какая из них публикуется.
-- Не рассчитывать, что GitHub-рендер markdown в репозитории будет выглядеть как GitHub Pages. Это разные режимы отображения.
+### Сайт всё ещё выглядит старым
+
+Скорее всего, GitHub Pages ещё не пересобрал сайт или браузер держит старый CSS. Подожди пару минут и сделай hard refresh.
+
+### Сайт собирается из root, а не из docs
+
+В `Settings -> Pages` должно быть:
+
+```txt
+Branch: main / docs
+```
+
+Если там `main / (root)`, будет публиковаться корень репозитория, а не документация.
+
+### Навигация не появилась
+
+Проверь, что у страниц есть front matter с `layout`, `title` и `nav_order`.
