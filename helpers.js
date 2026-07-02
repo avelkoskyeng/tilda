@@ -1,4 +1,4 @@
-// cp_tpl core modules v11
+// cp_tpl core modules v12
 
 (function (window, document) {
   'use strict';
@@ -3138,21 +3138,38 @@
     return result;
   }
 
-  function getFormFieldValue(form, names) {
-    if (!form || !form.querySelector) return '';
+  function getFormFieldElement(form, names, options) {
+    if (!form || !form.querySelector) return null;
 
     names = Array.isArray(names) ? names : [names];
+    options = options || {};
 
     for (var i = 0; i < names.length; i++) {
       var name = names[i];
       var input = form.querySelector('input[name="' + name + '"], select[name="' + name + '"], textarea[name="' + name + '"]');
 
-      if (input && hasValue(input.value)) {
-        return input.value;
+      if (!input || !hasValue(input.value)) {
+        continue;
       }
+
+      if (
+        options.ignoreAutoProductId === true &&
+        input.dataset &&
+        input.dataset.cpTplCjmProductSource === 'auto'
+      ) {
+        continue;
+      }
+
+      return input;
     }
 
-    return '';
+    return null;
+  }
+
+  function getFormFieldValue(form, names, options) {
+    var input = getFormFieldElement(form, names, options);
+
+    return input ? input.value : '';
   }
 
   function getProductIdFieldNames(config) {
@@ -3170,8 +3187,24 @@
     });
   }
 
-  function getProductIdFromForm(form, config) {
-    return getFormFieldValue(form, getProductIdFieldNames(config));
+  function getProductIdFromForm(form, config, options) {
+    return getFormFieldValue(form, getProductIdFieldNames(config), options);
+  }
+
+  function getProductIdInputFromForm(form, config) {
+    if (!form || !form.querySelector) return null;
+
+    var names = getProductIdFieldNames(config);
+
+    for (var i = 0; i < names.length; i++) {
+      var input = form.querySelector('input[name="' + names[i] + '"]');
+
+      if (input) {
+        return input;
+      }
+    }
+
+    return null;
   }
 
   function getMapProductId(mapValue) {
@@ -3246,23 +3279,64 @@
     return '';
   }
 
-  function setFormProductId(form, productId, config) {
-    if (!form || !productId) return;
+  function setFormProductId(form, productId, config, source) {
+    if (!form) return;
 
     var fieldName = (config && config.productIdFieldName) || 'cjmProductId';
     var input = getOrCreateHiddenInput(form, fieldName);
 
-    setVal(input, productId);
+    setVal(input, productId || '');
+
+    if (input.dataset) {
+      input.dataset.cpTplCjmProductSource = source || (productId ? 'manual' : '');
+    }
+  }
+
+  function hasProductIdMapForSelect(select, config) {
+    config = config || {};
+
+    if (config.productIdMap) {
+      return true;
+    }
+
+    if (!Array.isArray(config.productIdMaps)) {
+      return false;
+    }
+
+    return config.productIdMaps.some(function (item) {
+      item = item || {};
+
+      var selector = item.selectSelector || item.selector;
+
+      return !selector || select.matches && select.matches(selector);
+    });
+  }
+
+  function clearMappedProductIdFromForm(form, config) {
+    var input = getProductIdInputFromForm(form, config);
+
+    if (!input || !input.dataset) return;
+
+    if (input.dataset.cpTplCjmProductSource === 'map') {
+      setVal(input, '');
+      input.dataset.cpTplCjmProductSource = '';
+    }
   }
 
   function applyProductIdMapToSelect(select, config) {
     var productId = resolveProductIdFromMaps(select, config);
+    var form = select.closest ? select.closest('form') : null;
 
-    if (!productId) return '';
+    if (productId) {
+      setFormProductId(form, productId, config, 'map');
+      return productId;
+    }
 
-    setFormProductId(select.closest('form'), productId, config);
+    if (hasProductIdMapForSelect(select, config)) {
+      clearMappedProductIdFromForm(form, config);
+    }
 
-    return productId;
+    return '';
   }
 
   function getSelectContext(select, config) {
@@ -3284,7 +3358,9 @@
         selectedOption && selectedOption.getAttribute('data-cp-product-id') ||
         select.getAttribute('data-cp-product-id') ||
         getClosestDataAttr(select, 'data-cp-product-id') ||
-        getProductIdFromForm(form, config),
+        getProductIdFromForm(form, config, {
+          ignoreAutoProductId: true
+        }),
 
       selectedValue: select.value,
 
@@ -3470,6 +3546,10 @@
     setVal(productKitCode, product.productKitCode);
     setVal(tariffUuid, product.kitTariffUuid);
     setVal(cjmProductId, product.id);
+
+    if (cjmProductId && cjmProductId.dataset) {
+      cjmProductId.dataset.cpTplCjmProductSource = 'auto';
+    }
 
     if (typeof config.onFillForm === 'function') {
       config.onFillForm(form, product, select);
