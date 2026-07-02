@@ -1,4 +1,4 @@
-// cp_tpl core modules v8
+// cp_tpl core modules v9
 
 (function (window, document) {
   'use strict';
@@ -2813,54 +2813,63 @@
             selectedStk: 'english_adult_not_native_speaker_course_elementary'
         },
         {
+            brand: 'skysmart',
             id: 'kid_mini_course_kids_russian',
             label: 'Русский язык',
             selectValues: ['Русский', 'Русский язык', 'russian'],
             selectedStk: 'mini_course_kids_russian'
         },
         {
+            brand: 'skysmart',
             id: 'kid_mini_course_kids_social_science',
             label: 'Обществознание',
             selectValues: ['Обществознание', 'social science'],
             selectedStk: 'mini_course_kids_social_science'
         },
         {
+            brand: 'skysmart',
             id: 'kid_mini_course_kids_physics',
             label: 'Физика',
             selectValues: ['Физика', 'physics'],
             selectedStk: 'mini_course_kids_physics'
         },
         {
+            brand: 'skysmart',
             id: 'kid_mini_course_kids_chemistry',
             label: 'Химия',
             selectValues: ['Химия', 'chemistry'],
             selectedStk: 'mini_course_kids_chemistry'
         },
         {
+            brand: 'skysmart',
             id: 'kid_mini_course_cc_python_kids_pl',
             label: 'Программирование',
             selectValues: ['Программирование', 'programming'],
             selectedStk: 'mini_course_cc_python_kids_pl'
         },
         {
+            brand: 'skysmart',
             id: 'kid_math_kids_exam_premium',
             label: 'Подготовка к ЕГЭ и ОГЭ',
             selectValues: ['Подготовка к ЕГЭ и ОГЭ', 'ЕГЭ', 'ОГЭ', 'exam'],
             selectedStk: 'math_kids_exam_premium'
         },
         {
+            brand: 'skysmart',
             id: 'kid_preschool_kids_f2f',
             label: 'Дошкольная подготовка',
             selectValues: ['Дошкольная подготовка', 'preschool'],
             selectedStk: 'preschool_kids_f2f'
         },
         {
+            brand: 'skysmart',
             id: 'kid_languages_other',
             label: 'Другие иностранные языки',
             selectValues: ['Другие иностранные языки', 'other languages'],
             selectedStk: 'french_junior_not_native_speaker_premium'
         },
         {
+            brand: 'skysmart',
             id: 'kid_skysmart_homeschooling_8_grade',
             label: 'Домашний лицей 5-11 класс',
             selectValues: ['Домашний лицей 5-11 класс'],
@@ -2868,6 +2877,7 @@
             kitTariffUuid: '0d57ce9b-3d43-47e6-9fa7-a81e081a4ce1'
         },
         {
+            brand: 'skysmart',
             id: 'kid_lc_exam_ege_webinar_sprint26',
             label: 'ЕГЭ',
             selectValues: ['ЕГЭ', 'exam'],
@@ -2877,6 +2887,7 @@
             kitTariffUuid: '2686aa95-95e4-48fe-9fbc-6b3d2654ca58'
         },
         {
+            brand: 'skysmart',
             id: 'kid_lc_exam_oge_webinar_sprint26',
             label: 'ОГЭ',
             selectValues: ['ОГЭ', 'exam'],
@@ -2886,6 +2897,7 @@
             kitTariffUuid: 'e3dcc4f2-eb19-4c2f-8329-789f5243b70a'
         },
         {
+            brand: 'skysmart',
             id: 'kid_skysmart_homeschooling_5_grade',
             label: '5 класс',
             selectValues: ['Домашний лицей 5-11 класс'],
@@ -2893,6 +2905,7 @@
             kitTariffUuid: '6e84a51e-181d-4515-b70c-4ee834120730'
         },
         {
+            brand: 'skysmart',
             id: 'kid_skysmart_homeschooling_6_grade',
             label: '6 класс',
             selectValues: ['Домашний лицей 5-11 класс'],
@@ -2900,6 +2913,7 @@
             kitTariffUuid: '866bec87-e956-4c26-9155-06b1566458a5'
         },
         {
+            brand: 'skysmart',
             id: 'kid_skysmart_homeschooling_7_grade',
             label: '7 класс',
             selectValues: ['Домашний лицей 5-11 класс'],
@@ -2907,6 +2921,7 @@
             kitTariffUuid: '2a3c7dbc-30c2-428d-82dc-4869fd640010'
         },
         {
+            brand: 'skysmart',
             id: 'kid_skysmart_homeschooling_9_grade',
             label: '9 класс',
             selectValues: ['Домашний лицей 5-11 класс'],
@@ -2914,6 +2929,7 @@
             kitTariffUuid: 'e9f472bc-b86a-426f-b7f4-2dbca44b8b07'
         },
         {
+            brand: 'skysmart',
             id: 'kid_skysmart_homeschooling_10_grade',
             label: '10 класс',
             selectValues: ['Домашний лицей 5-11 класс'],
@@ -2921,6 +2937,7 @@
             kitTariffUuid: 'a1272ff1-6129-419c-b405-bc70cc9f9021'
         },
         {
+            brand: 'skysmart',
             id: 'kid_skysmart_homeschooling_11_grade',
             label: '11 класс',
             selectValues: ['Домашний лицей 5-11 класс'],
