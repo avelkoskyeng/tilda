@@ -1,4 +1,4 @@
-// cp_tpl core modules v10
+// cp_tpl core modules v11
 
 (function (window, document) {
   'use strict';
@@ -2638,8 +2638,8 @@
         },
         {
             brand: 'skysmart',
-            label: 'Английский язык',
-            selectValues: ['Английский', 'Английский язык', 'english'],
+            label: 'Английский язык премиум',
+            selectValues: ['Английский премиум', 'Английский язык премиум', 'english premium'],
             id: 'kid_english_junior_not_native_speaker_premium',
             selectedStk: 'english_junior_not_native_speaker_premium'
         },
@@ -2792,8 +2792,8 @@
         },
         {
             brand: 'skyeng',
-            label: 'Английский',
-            selectValues: ['Английский', 'english'],
+            label: 'Английский премиум',
+            selectValues: ['Английский премиум', 'Английский язык премиум', 'english premium'],
             id: 'adult_english_not_native_speaker_premium',
             selectedStk: 'english_adult_not_native_speaker_premium'
         },
