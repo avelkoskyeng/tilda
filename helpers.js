@@ -1,4 +1,4 @@
-// cp_tpl core modules v12
+// cp_tpl core modules v13
 // COMMIT TO PURGE LATEST 
 
 (function (window, document) {
@@ -2944,6 +2944,20 @@
             selectValues: ['Домашний лицей 11 класс'],
             productKitCode: 'skysmart_homeschooling_11_grade',
             kitTariffUuid: 'b36f80e4-aef9-4e84-be20-aac8c6a1333f'
+        },
+        {
+            brand: 'skysmart',
+            label: 'Разработка Python, индивидуальные уроки',
+            selectValues: [],
+            id: 'kid_mini_course_cc_python_kids_f2f',
+            selectedStk: 'mini_course_cc_python_kids_f2f'
+        },
+        {
+            brand: 'skysmart',
+            label: 'Курсы по английскому языку для малышей 50 минут',
+            selectValues: [],
+            id: 'kid_mini_course_kids_english_klp_50',
+            selectedStk: 'mini_course_kids_english_klp_50'
         }
     ];
 
