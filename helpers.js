@@ -2806,6 +2806,13 @@
             selectedStk: 'english_adult_not_native_speaker_course_elementary'
         },
         {
+            brand: 'skyeng',
+            label: 'Английский стандартный',
+            selectValues: [],
+            id: 'adult_english_adult_not_native_speaker',
+            selectedStk: 'english_adult_not_native_speaker'
+        },
+        {
             brand: 'skysmart',
             id: 'kid_mini_course_kids_russian',
             label: 'Русский язык',
