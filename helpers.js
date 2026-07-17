@@ -1047,24 +1047,37 @@
       '.dot.active {',
       '  background-color: rgba(2, 33, 43, 1);',
       '}',
-      '.cp-scroll-cards,',
-      '.add_mob_scroll_indicator > div {',
+      '.cp-scroll-cards .tn-molecule,',
+      '.add_mob_scroll_indicator .tn-molecule {',
       '  scrollbar-width: none;',
       '}'
     ].join('\n'));
 
     var items = Array.isArray(config.items) ? config.items : [config];
 
-    function shouldStartInMiddle(rootElement, scrollElement, dotsContainer, itemConfig) {
+    function shouldStartInMiddle(
+      rootElement,
+      scrollElement,
+      dotsContainer,
+      itemConfig
+    ) {
       if (itemConfig.start === 'middle') return true;
       if (itemConfig.start === false || itemConfig.start === 'start') return false;
 
-      var middleSelector = itemConfig.middleSelector || '.--scroll-mid, .is-scroll-mid, [data-scroll-start="middle"]';
+      var middleSelector =
+        itemConfig.middleSelector ||
+        '.--scroll-mid, .is-scroll-mid, [data-scroll-start="middle"]';
 
       return Boolean(
-        rootElement && rootElement.matches && rootElement.matches(middleSelector) ||
-        scrollElement && scrollElement.matches && scrollElement.matches(middleSelector) ||
-        dotsContainer && dotsContainer.matches && dotsContainer.matches(middleSelector)
+        rootElement &&
+          rootElement.matches &&
+          rootElement.matches(middleSelector) ||
+        scrollElement &&
+          scrollElement.matches &&
+          scrollElement.matches(middleSelector) ||
+        dotsContainer &&
+          dotsContainer.matches &&
+          dotsContainer.matches(middleSelector)
       );
     }
 
@@ -1089,14 +1102,16 @@
 
         if (dotsContainer && itemConfig.styleDots !== false) {
           dotsContainer.style.display = itemConfig.dotsDisplay || 'flex';
-          dotsContainer.style.justifyContent = itemConfig.dotsJustify || 'center';
+          dotsContainer.style.justifyContent =
+            itemConfig.dotsJustify || 'center';
           dotsContainer.style.gap = itemConfig.dotsGap || '8px';
         }
       }
 
       function updateDots() {
         var scrollLeft = scrollElement.scrollLeft;
-        var maxScrollLeft = scrollElement.scrollWidth - scrollElement.clientWidth;
+        var maxScrollLeft =
+          scrollElement.scrollWidth - scrollElement.clientWidth;
         var sectionCount = dots.length;
 
         if (sectionCount <= 1 || maxScrollLeft <= 0) {
@@ -1116,7 +1131,8 @@
       }
 
       function scrollToMiddle() {
-        var maxScrollLeft = scrollElement.scrollWidth - scrollElement.clientWidth;
+        var maxScrollLeft =
+          scrollElement.scrollWidth - scrollElement.clientWidth;
 
         scrollElement.scrollLeft = maxScrollLeft / 2;
         updateDots();
@@ -1126,7 +1142,14 @@
       scrollElement.addEventListener('scroll', updateDots);
       updateDots();
 
-      if (shouldStartInMiddle(rootElement, scrollElement, dotsContainer, itemConfig)) {
+      if (
+        shouldStartInMiddle(
+          rootElement,
+          scrollElement,
+          dotsContainer,
+          itemConfig
+        )
+      ) {
         requestAnimationFrame(scrollToMiddle);
         setTimeout(scrollToMiddle, 300);
       }
@@ -1135,10 +1158,23 @@
     function initByItem(itemConfig) {
       itemConfig = itemConfig || {};
 
-      var rootSelector = itemConfig.rootSelector || itemConfig.blockSelector || '.uc-scroll-block';
-      var scrollSelector = itemConfig.scrollSelector || itemConfig.cardsSelector || '.cp-scroll-cards, .add_mob_scroll_indicator > div';
-      var dotsSelector = itemConfig.dotsSelector || '.scroll-indicator .dot';
-      var directMode = itemConfig.direct === true || itemConfig.rootSelector === null || itemConfig.blockSelector === null;
+      var rootSelector =
+        itemConfig.rootSelector ||
+        itemConfig.blockSelector ||
+        '.uc-scroll-block';
+
+      var scrollSelector =
+        itemConfig.scrollSelector ||
+        itemConfig.cardsSelector ||
+        '.cp-scroll-cards .tn-molecule, .add_mob_scroll_indicator .tn-molecule';
+
+      var dotsSelector =
+        itemConfig.dotsSelector || '.scroll-indicator .dot';
+
+      var directMode =
+        itemConfig.direct === true ||
+        itemConfig.rootSelector === null ||
+        itemConfig.blockSelector === null;
 
       if (directMode) {
         initPair(
