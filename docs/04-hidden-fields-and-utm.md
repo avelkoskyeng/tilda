@@ -2,105 +2,118 @@
 layout: default
 title: Hidden fields и UTM
 nav_order: 5
+search_keywords: >-
+  hidden fields hidden input скрытые поля utm query параметры url search params buildUtmMarks
+  promo promocode marketingExperiments comment overwrite force apply destroy getValues applyParams
+  updateURLParameters getHiddenFieldsForUtmMarks utmParameters tracking метки
 ---
 # Hidden fields и UTM
 
-## `window.cp_tpl.hiddenFields(fields, config)`
+Этот модуль создаёт скрытые поля в Tilda-формах и собирает UTM/query string для интеграций.
 
-Создаёт hidden-поля во всех формах и хранит их значения для дальнейшей UTM/CJM-сборки.
+## `window.cp_tpl.hiddenFields(fields, config)` {#hidden-fields}
+
+Создаёт hidden inputs во всех подходящих формах, запоминает стартовые значения и при необходимости следит за новыми формами через `MutationObserver`.
+
+### Стандартный вызов
 
 ```js
 window.cp_tpl.hiddenFields({
   promoCode: 'SALE',
-  marketing_experiments: 'test-a',
-  comment: 'landing comment',
+  comment: 'landing-comment',
   cjmProductId: 'adult_english_not_native_speaker_premium'
 });
 ```
 
-### Поведение по умолчанию
-
-`hiddenFields` не должен ломать скрипты лендинга, которые меняют значения hidden-полей после инициализации.
-
-Поэтому по умолчанию:
-
-1. Если поля нет — поле создаётся.
-2. Если поле пустое — ставится значение из `fields`.
-3. Если поле уже было инициализировано — повторный `apply()` не перетирает его.
-4. Если другой скрипт позже поменял значение — `hiddenFields` не откатывает его назад.
-5. `getValues()` старается читать актуальные значения из DOM, а не только стартовый конфиг.
-
-### Параметры fields
-
-`fields` — объект, где ключ становится `name` hidden-инпута, а значение — `value`.
+### Полный вызов
 
 ```js
-window.cp_tpl.hiddenFields({
-  serviceTypeKey: 'mini_course_kids_math',
-  productKitCode: '',
-  tariffUuid: '',
-  cjmProductId: ''
-});
+var hidden = window.cp_tpl.hiddenFields(
+  {
+    promoCode: 'SALE',
+    marketing_experiments: 'experiment-a',
+    comment: 'landing-comment',
+    serviceTypeKey: 'english_adult_not_native_speaker_premium',
+    productKitCode: '',
+    tariffUuid: '',
+    cjmProductId: 'adult_english_not_native_speaker_premium'
+  },
+  {
+    formSelector: 'form',
+    boxSelector: '.t-form__inputsbox',
+    observe: true,
+    overwriteExisting: false,
+    force: false,
+    utmMarksMap: {
+      cjmProductId: 'productConfigId'
+    }
+  }
+);
 ```
 
-### Параметры config
+### Аргументы
 
-| Параметр | Тип | По умолчанию | Описание |
-|---|---:|---|---|
-| `formSelector` | string | `form` | Где искать формы. |
-| `boxSelector` | string | `.t-form__inputsbox` | Куда вставлять hidden inputs. |
-| `observe` | boolean | `true` | Следить за DOM и добавлять поля в новые формы. |
-| `overwriteExisting` | boolean | `false` | Если `true`, всегда перезаписывать значения. |
-| `force` | boolean | `false` | Алиас для `overwriteExisting`. |
-| `utmMarksMap` | object | стандартная карта | Дополнительная карта hidden-полей в UTM-параметры. |
+| Аргумент | Тип | По умолчанию | Что делает и когда нужен |
+|---|---|---|---|
+| `fields` | object | `{}` | Ключ становится `input.name`, значение — стартовым `input.value`. Можно передавать любые hidden-поля. |
+| `config.formSelector` | string | `form` | Где искать формы. |
+| `config.boxSelector` | string | `.t-form__inputsbox` | В какой контейнер формы добавлять hidden inputs. |
+| `config.observe` | boolean | `true` | Следить за DOM и применять поля к формам, появившимся позже. Отключай на полностью статичных страницах, если observer не нужен. |
+| `config.overwriteExisting` | boolean | `false` | Если `true`, каждый `apply()` принудительно ставит значение из `fields`, даже если другой скрипт уже его изменил. |
+| `config.force` | boolean | `false` | Alias для `overwriteExisting`. |
+| `config.utmMarksMap` | object | стандартная карта | Расширяет mapping `hidden field -> UTM param`, который использует `buildUtmMarks`. |
 
-### Возвращает
+### Почему по умолчанию значения не перетираются
+
+При первом применении библиотека ставит `data-cp-tpl-hidden-fields-inited="1"`. Повторный `apply()` не меняет такое поле, если не включён `overwriteExisting/force`. Это позволяет CJM, Televox или кастомному коду обновить hidden input позже и не получить откат к стартовому значению.
+
+### `hidden.apply()` {#hidden-apply}
+
+Повторно применяет набор `fields` к текущим формам.
+
+Стандартный и полный вызов одинаковы — аргументов нет:
 
 ```js
-var hidden = window.cp_tpl.hiddenFields({
-  comment: 'test'
-});
-
-hidden.apply();   // применить вручную
-hidden.destroy(); // остановить MutationObserver
+hidden.apply();
 ```
 
-### Принудительное перезаписывание
+При `overwriteExisting: false` уже инициализированные поля не перезаписываются; при `true` значения ставятся заново.
 
-Использовать осторожно:
+### `hidden.destroy()` {#hidden-destroy}
+
+Отключает `MutationObserver`, созданный конкретным вызовом `hiddenFields()`.
+
+Стандартный и полный вызов одинаковы — аргументов нет:
 
 ```js
-window.cp_tpl.hiddenFields({
-  serviceTypeKey: 'mini_course_kids_physics'
-}, {
-  overwriteExisting: true
-});
+hidden.destroy();
 ```
 
-или:
+После `destroy()` ручной `hidden.apply()` продолжает работать.
 
-```js
-window.cp_tpl.hiddenFields({
-  serviceTypeKey: 'mini_course_kids_physics'
-}, {
-  force: true
-});
-```
+## `window.cp_tpl.hiddenFields.getValues()` {#hidden-fields-get-values}
 
-## `window.cp_tpl.hiddenFields.getValues()`
+Возвращает текущие значения полей, когда-либо зарегистрированных через `hiddenFields`. Если поле есть в DOM, приоритет у актуального DOM-значения.
 
-Возвращает значения hidden-полей, зарегистрированных через `hiddenFields`. Если в DOM есть актуальное значение поля, вернёт его.
+### Стандартный вызов
 
 ```js
 var values = window.cp_tpl.hiddenFields.getValues();
 console.log(values.comment);
 ```
 
-## Стандартный UTM mapping для hidden-полей
+### Полный вызов
 
-`buildUtmMarks()` умеет автоматически добавлять некоторые hidden-поля в UTM-строку.
+```js
+var values = window.cp_tpl.hiddenFields.getValues();
+console.log(values);
+```
 
-| Hidden field | UTM параметр |
+Аргументов нет. Возвращает обычный объект `{ fieldName: value }`.
+
+## Стандартный hidden → UTM mapping
+
+| Hidden field | UTM/query параметр |
 |---|---|
 | `promoCode` | `promocode` |
 | `promocode` | `promocode` |
@@ -109,21 +122,13 @@ console.log(values.comment);
 | `marketing_experiments` | `marketingExperiments` |
 | `marketingExperiments` | `marketingExperiments` |
 
-### Добавить свою карту
+Дополнительный mapping добавляется через `hiddenFields(..., { utmMarksMap: {...} })`.
 
-```js
-window.cp_tpl.hiddenFields({
-  customField: 'custom-value'
-}, {
-  utmMarksMap: {
-    customField: 'customParam'
-  }
-});
-```
+## `window.cp_tpl.utm(config)` {#utm}
 
-## `window.cp_tpl.utm(config)`
+Сохраняет набор параметров в `window.utmParameters`, при необходимости обновляет URL и создаёт глобальную функцию `window.buildUtmMarks`.
 
-Управляет UTM-параметрами страницы и создаёт `window.buildUtmMarks`.
+### Стандартный вызов
 
 ```js
 window.cp_tpl.utm({
@@ -136,64 +141,94 @@ window.cp_tpl.utm({
 });
 ```
 
-### Параметры config
-
-| Параметр | Тип | По умолчанию | Описание |
-|---|---:|---|---|
-| `parameters` | object | `{}` | Основные параметры. |
-| `utmParameters` | object | `{}` | Алиас для `parameters`. |
-| `extraParams` | object | `{}` | Дополнительные простые параметры. |
-| `updateUrl` | boolean | `true` | Обновлять URL через `history.replaceState`. |
-| `exposeGlobals` | boolean | `true` | Создать `window.buildUtmMarks`. |
-
-### Формат параметра
-
-Простой формат:
-
-```js
-window.cp_tpl.utm({
-  parameters: {
-    utm_source: 'landing'
-  }
-});
-```
-
-Расширенный формат:
-
-```js
-window.cp_tpl.utm({
-  parameters: {
-    product: {
-      value: 'type-skyeng_action|name-example',
-      type: 'hard'
-    }
-  }
-});
-```
-
-`type`:
-
-| Тип | Поведение |
-|---|---|
-| `soft` | Поставить параметр только если его нет в URL. |
-| `hard` | Перезаписать параметр в URL. |
-
-### Возвращает
+### Полный вызов
 
 ```js
 var utm = window.cp_tpl.utm({
   parameters: {
-    utm_source: 'landing'
-  }
+    utm_source: {
+      value: 'landing',
+      type: 'soft'
+    },
+    product: {
+      value: 'type-skyeng_action|name-example',
+      type: 'hard'
+    }
+  },
+  utmParameters: {
+    // Alias для parameters; используется только если parameters не задан.
+  },
+  extraParams: {
+    campaignType: 'promo'
+  },
+  updateUrl: true,
+  exposeGlobals: true
 });
-
-utm.parameters;
-utm.buildUtmMarks({ extra: '1' });
 ```
 
-## `window.buildUtmMarks(extra, buildConfig)`
+### Аргументы
 
-Создаётся после `window.cp_tpl.utm()`, если `exposeGlobals !== false`.
+| Аргумент | Тип | По умолчанию | Что делает и когда нужен |
+|---|---|---|---|
+| `parameters` | object | `{}` | Основной набор query-параметров. Значения могут быть простыми или `{ value, type }`. |
+| `utmParameters` | object | `{}` | Alias для `parameters`; учитывается только если `parameters` отсутствует/falsy. |
+| `extraParams` | object | `{}` | Дополнительные простые значения. Непустые ключи добавляются поверх `parameters`. |
+| `updateUrl` | boolean | `true` | Применяет параметры к текущему URL через `history.replaceState`. |
+| `exposeGlobals` | boolean | `true` | Создаёт `window.buildUtmMarks(extra, buildConfig)`. |
+
+### Формат одного параметра
+
+```js
+{
+  utm_source: 'landing',
+  product: {
+    value: 'type-skyeng_action|name-example',
+    type: 'hard'
+  }
+}
+```
+
+`type: 'soft'` ставит значение только если параметра ещё нет. `type: 'hard'` всегда перезаписывает. Любой неизвестный `type` считается `soft`.
+
+### Возвращает
+
+`parameters` — итоговый merged object. Также возвращается функция `utm.buildUtmMarks(extra, buildConfig)`.
+
+### `utm.buildUtmMarks(extra, buildConfig)` {#utm-instance-build-marks}
+
+#### Стандартный вызов
+
+```js
+var marks = utm.buildUtmMarks({
+  foo: 'bar'
+});
+```
+
+#### Полный вызов
+
+```js
+var marks = utm.buildUtmMarks(
+  {
+    foo: { value: 'bar', type: 'hard' }
+  },
+  {
+    includeHiddenFields: false
+  }
+);
+```
+
+| Аргумент | Тип | По умолчанию | Что делает |
+|---|---|---|---|
+| `extra` | object | `{}` | Дополнительные soft/hard параметры поверх текущих UTM. |
+| `buildConfig.includeHiddenFields` | boolean | `true` | Управляет добавлением mapped hidden fields. |
+
+Эта функция использует тот же внутренний builder, что `window.buildUtmMarks()`.
+
+## `window.buildUtmMarks(extra, buildConfig)` {#global-build-utm-marks}
+
+Создаётся `window.cp_tpl.utm()`, если `exposeGlobals !== false`. Собирает текущий `location.search`, `window.utmParameters`, mapped hidden fields и `extra`.
+
+### Стандартный вызов
 
 ```js
 var marks = window.buildUtmMarks({
@@ -201,23 +236,134 @@ var marks = window.buildUtmMarks({
 });
 ```
 
-По умолчанию включает hidden-поля из `hiddenFields`.
-
-Отключить hidden-поля:
+### Полный вызов
 
 ```js
-window.buildUtmMarks({}, {
-  includeHiddenFields: false
+var marks = window.buildUtmMarks(
+  {
+    product: {
+      value: 'type-skyeng_action|name-example',
+      type: 'hard'
+    }
+  },
+  {
+    includeHiddenFields: false
+  }
+);
+```
+
+| Аргумент | Тип | По умолчанию | Что делает |
+|---|---|---|---|
+| `extra` | object | `{}` | Параметры, применяемые последними; могут быть `soft/hard`. |
+| `buildConfig.includeHiddenFields` | boolean | `true` | Включать mapped hidden fields из `hiddenFieldsState`. |
+
+Возвращает строку без ведущего `?`, например `utm_source=landing&comment=test`.
+
+## `window.cp_tpl.utm.applyParams(searchParams, parameters)` {#utm-apply-params}
+
+Низкоуровневый helper, который применяет параметры к существующему `URLSearchParams`.
+
+### Стандартный вызов
+
+```js
+var params = new URLSearchParams(location.search);
+window.cp_tpl.utm.applyParams(params, {
+  utm_source: 'landing'
 });
 ```
 
-## Внутренние методы UTM
-
-Доступны как публичные функции, но обычно не нужны вручную:
+### Полный вызов
 
 ```js
-window.cp_tpl.utm.applyParams(searchParams, parameters);
-window.cp_tpl.utm.updateURLParameters(parameters);
-window.cp_tpl.utm.buildUtmMarks(parameters, config);
-window.cp_tpl.utm.getHiddenFieldsForUtmMarks();
+var params = new URLSearchParams('?utm_source=old');
+
+window.cp_tpl.utm.applyParams(params, {
+  utm_source: {
+    value: 'new-source',
+    type: 'hard'
+  },
+  utm_campaign: {
+    value: 'summer',
+    type: 'soft'
+  }
+});
 ```
+
+| Аргумент | Тип | Что делает |
+|---|---|---|
+| `searchParams` | `URLSearchParams` | Объект изменяется in-place. |
+| `parameters` | object | Набор простых или `{ value, type }` параметров. Пустые значения игнорируются. |
+
+## `window.cp_tpl.utm.updateURLParameters(parameters)` {#utm-update-url}
+
+Применяет параметры к текущему URL и делает `history.replaceState` без перезагрузки страницы.
+
+### Стандартный вызов
+
+```js
+window.cp_tpl.utm.updateURLParameters({
+  utm_source: 'landing'
+});
+```
+
+### Полный вызов
+
+```js
+window.cp_tpl.utm.updateURLParameters({
+  utm_source: { value: 'landing', type: 'hard' },
+  utm_campaign: { value: 'summer', type: 'soft' }
+});
+```
+
+| Аргумент | Тип | Что делает |
+|---|---|---|
+| `parameters` | object | Набор URL-параметров в том же формате, что у `utm()`: простое значение или `{ value, type }`. `soft` не перезаписывает существующий query parameter, `hard` перезаписывает. |
+
+## `window.cp_tpl.utm.buildUtmMarks(parameters, config)` {#utm-build-marks}
+
+Прямая публичная ссылка на внутренний builder. Отличается от `utm()` тем, что ничего не записывает в глобальные переменные и не обновляет URL.
+
+### Стандартный вызов
+
+```js
+var marks = window.cp_tpl.utm.buildUtmMarks({
+  extra: '1'
+});
+```
+
+### Полный вызов
+
+```js
+var marks = window.cp_tpl.utm.buildUtmMarks(
+  {
+    extra: { value: '1', type: 'hard' }
+  },
+  {
+    includeHiddenFields: true
+  }
+);
+```
+
+| Аргумент | Тип | По умолчанию | Что делает |
+|---|---|---|---|
+| `parameters` | object | `{}` | Дополнительные параметры, применяемые поверх текущего URL, глобальных UTM и hidden fields. |
+| `config.includeHiddenFields` | boolean | `true` | Включать mapped hidden fields. |
+
+## `window.cp_tpl.utm.getHiddenFieldsForUtmMarks()` {#utm-hidden-values}
+
+Возвращает только те текущие hidden-поля, для которых есть mapping в `cp_tpl.hiddenFieldsState.utmMarksMap`.
+
+### Стандартный вызов
+
+```js
+var mapped = window.cp_tpl.utm.getHiddenFieldsForUtmMarks();
+```
+
+### Полный вызов
+
+```js
+var mapped = window.cp_tpl.utm.getHiddenFieldsForUtmMarks();
+console.log(mapped.promocode, mapped.comment);
+```
+
+Аргументов нет. Возвращает объект query-параметров, уже переименованных согласно mapping.

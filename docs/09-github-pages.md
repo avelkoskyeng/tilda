@@ -2,16 +2,23 @@
 layout: default
 title: GitHub Pages
 nav_order: 10
+search_keywords: >-
+  github pages docs publish публикация just the docs search lunr keywords поиск keyword custom index deploy
 ---
 # GitHub Pages и публикация документации
 
-Эта документация рассчитана на публикацию из папки `/docs` через GitHub Pages.
+Документация публикуется из папки `/docs` через GitHub Pages и тему Just the Docs.
 
-## Рекомендуемая структура
+## Актуальная структура
 
 ```txt
 docs/
   _config.yml
+  _includes/
+    lunr/
+      custom-data.json
+      custom-index.js
+    search_placeholder_custom.html
   index.md
   01-quick-start.md
   02-core.md
@@ -23,7 +30,12 @@ docs/
   08-service-scripts.md
   09-github-pages.md
   10-recipes.md
+  11-terms.md
+  12-api-index.md
 helpers.js
+terms.js
+scripts/
+  check-docs-api.cjs
 readme.md
 ```
 
@@ -38,96 +50,144 @@ readme.md
 5. Папка: `/docs`.
 6. Нажать `Save`.
 
-После этого `docs/index.md` станет главной страницей сайта.
-
-Для проекта `avelkoskyeng/tilda` адрес будет таким:
+Для проекта `avelkoskyeng/tilda` сайт публикуется по адресу:
 
 ```txt
 https://avelkoskyeng.github.io/tilda/
 ```
 
-## Тема Just the Docs Dark
+## Базовая конфигурация Just the Docs
 
-В `_config.yml` используется Just the Docs в тёмной теме:
+Ключевые настройки находятся в `docs/_config.yml`:
 
 ```yml
-title: cp_tpl docs
-description: Документация по JS-хелперам helpers.js для Tilda
-
-url: "https://avelkoskyeng.github.io"
-baseurl: "/tilda"
-
 remote_theme: just-the-docs/just-the-docs
 color_scheme: dark
 search_enabled: true
 heading_anchors: true
 
-aux_links:
-  GitHub:
-    - "https://github.com/avelkoskyeng/tilda"
-  helpers.js:
-    - "https://github.com/avelkoskyeng/tilda/blob/main/helpers.js"
-aux_links_new_tab: true
-
-plugins:
-  - jekyll-remote-theme
+search.heading_level: 3
+search.previews: 3
+search.preview_words_before: 5
+search.preview_words_after: 12
+search.rel_url: true
+search.button: true
+search.focus_shortcut_key: "k"
+search.tokenizer_separator: /[\s\-\/\._]+/
 ```
 
-`remote_theme` подключает тему из GitHub-репозитория темы. `plugins: jekyll-remote-theme` нужен GitHub Pages, чтобы собрать сайт с remote theme.
+`heading_level: 3` делает большие API-страницы более гранулярными в выдаче. Tokenizer дополнительно разбивает dotted/underscored имена вроде `cp_tpl.forms.selectAll`, чтобы запросы `cp_tpl`, `forms`, `selectAll` и их комбинации находились предсказуемее.
 
-## Навигация
+## Дополнительные ключевые слова для поиска
 
-Каждая страница в `docs` начинается с front matter:
+Just the Docs по умолчанию индексирует title/content/URL, но не произвольные поля front matter. Поэтому в проекте добавлен отдельный `search_keywords`.
+
+Пример страницы:
 
 ```md
 ---
 layout: default
 title: Формы
 nav_order: 4
+search_keywords: >-
+  forms form форма формы выбрать все формы select all selectedFormIds
+  fill data page data share televox import group
 ---
 ```
 
-`title` — название в боковом меню.
+В `docs/_includes/lunr/custom-data.json` поле добавляется в generated search data:
 
-`nav_order` — порядок в навигации.
+```liquid
+{%- capture newline %}
+{% endcapture -%}
+"search_keywords": {{ include.page.search_keywords | default: "" | markdownify | replace:newline,' ' | strip_html | normalize_whitespace | strip | jsonify }},
+```
 
-Главная страница использует layout `home`:
+А `docs/_includes/lunr/custom-index.js` подмешивает его к searchable content:
+
+```js
+var cpTplSearchContent = [docs[i].content, docs[i].search_keywords];
+docs[i].content = cpTplSearchContent.filter(Boolean).join(' ');
+```
+
+### Как подбирать `search_keywords`
+
+Для каждой API-страницы добавляй:
+
+- полное имя функции и короткое имя;
+- английские и русские варианты термина;
+- частую задачу пользователя: «редирект после формы», «скопировать промокод», «выбрать все формы»;
+- названия важных аргументов и глобальных интеграций;
+- старые/разговорные названия, по которым функцию реально ищут.
+
+Не нужно дублировать весь текст страницы: keywords должны закрывать только алиасы и формулировки, которых нет в основном контенте.
+
+## Placeholder и shortcut поиска
+
+`docs/_includes/search_placeholder_custom.html` меняет placeholder на:
+
+```txt
+Поиск по функциям, аргументам и ключевым словам
+```
+
+`Ctrl + K` / `Cmd + K` переводит фокус в поиск.
+
+## Навигация
+
+Каждая страница начинается с front matter:
 
 ```md
 ---
-layout: home
-title: cp_tpl docs
-nav_order: 1
-permalink: /
+layout: default
+title: Формы
+nav_order: 4
+search_keywords: >-
+  forms форма televox
 ---
 ```
 
-## Что удалить из старой версии
+`title` задаёт название в sidebar, `nav_order` — порядок, `search_keywords` — дополнительные поисковые aliases.
 
-Если раньше пробовали другие темы, можно удалить:
+Главная страница использует `layout: home` и `permalink: /`.
 
-```txt
-docs/assets/main.scss
-docs/assets/css/dark.css
-docs/assets/css/style.scss
-docs/_includes/custom-head.html
+## Проверка покрытия публичного API
+
+После изменения `helpers.js` или `terms.js` запусти:
+
+```bash
+node scripts/check-docs-api.cjs
 ```
 
-Для Just the Docs Dark эти файлы не нужны.
+Скрипт извлекает публичные `window.cp_tpl.*`, публичные function aliases, намеренно создаваемые globals и функции `terms.js`. Если функция нигде не упомянута в Markdown, команда завершится с ошибкой и покажет список пропусков.
 
-## Проверка после деплоя
+Важно: checker проверяет наличие функции в docs, но не качество описания. Для новой функции всё равно нужно вручную добавить:
 
-1. Дождаться завершения Pages deploy.
-2. Открыть опубликованный сайт.
-3. Сделать hard refresh: `Cmd/Ctrl + Shift + R`.
-4. Проверить, что слева появилась боковая навигация Just the Docs.
-5. Проверить поиск в верхней части страницы.
+1. стандартный, самый частый вызов;
+2. полный вызов со всеми поддерживаемыми аргументами;
+3. описание каждого аргумента, default и практический смысл;
+4. возвращаемое значение/методы;
+5. `search_keywords` с aliases и пользовательскими формулировками.
+
+## Проверка после deploy
+
+1. Убедиться, что GitHub Pages build завершился без ошибки.
+2. Сделать hard refresh: `Cmd/Ctrl + Shift + R`.
+3. Проверить sidebar и API index.
+4. Проверить поиск по полному имени: `cp_tpl.forms.selectAll`.
+5. Проверить поиск по части имени: `selectAll`, `forms`.
+6. Проверить русский alias: например `выбрать все формы`.
+7. Проверить аргумент: например `waitForStableDom`.
+8. Проверить `Ctrl/Cmd + K`.
 
 ## Частые проблемы
 
-### Сайт всё ещё выглядит старым
+### Новые keywords не находятся
 
-Скорее всего, GitHub Pages ещё не пересобрал сайт или браузер держит старый CSS. Подожди пару минут и сделай hard refresh.
+Проверь три вещи:
+
+- в front matter страницы есть `search_keywords`;
+- файлы `_includes/lunr/custom-data.json` и `custom-index.js` попали в репозиторий;
+- GitHub Pages уже пересобрал сайт после commit.
 
 ### Сайт собирается из root, а не из docs
 
@@ -137,8 +197,6 @@ docs/_includes/custom-head.html
 Branch: main / docs
 ```
 
-Если там `main / (root)`, будет публиковаться корень репозитория, а не документация.
-
 ### Навигация не появилась
 
-Проверь, что у страниц есть front matter с `layout`, `title` и `nav_order`.
+Проверь `layout`, `title` и `nav_order` в front matter страницы.

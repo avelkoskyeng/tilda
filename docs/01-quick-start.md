@@ -2,6 +2,8 @@
 layout: default
 title: Быстрый старт
 nav_order: 2
+search_keywords: >-
+  quick start быстрый старт подключение install cdn hidden fields televox fillData cjm b2b пример начать
 ---
 # Быстрый старт
 
