@@ -2,79 +2,72 @@
 layout: default
 title: Сервисные скрипты
 nav_order: 9
+search_keywords: >-
+  service scripts сервисные скрипты waitForZoneJs zone js t1093 wait timeout interval
+  url links query params utm ссылки history pushState replaceState mutation observer stopImmediatePropagation
 ---
-# Сервисные скрипты в хвосте файла
+# Сервисные скрипты в `helpers.js`
 
-В конце `helpers.js` есть два блока, которые не находятся внутри `window.cp_tpl`, но выполняются на странице после загрузки файла.
+В хвосте `helpers.js` есть код вне `window.cp_tpl`. Он выполняется автоматически после загрузки файла.
 
-## Zone JS для t1093
+## `waitForZoneJs(timeout, interval)` {#wait-for-zone-js}
 
-```js
-function waitForZoneJs(timeout = 60000, interval = 10) { ... }
-```
+Глобальная функция ждёт появления `window.Zone.current` и возвращает Promise<boolean>.
 
-### Что делает
-
-1. Ждёт появления `window.Zone.current`.
-2. Если Zone.js появился — пишет в консоль `Zone.js инициализирован`.
-3. Добавляет document-level обработчик клика:
+### Стандартный вызов
 
 ```js
-document.addEventListener('click', (event) => {
-  event.stopImmediatePropagation();
+waitForZoneJs().then(function (zoneReady) {
+  console.log(zoneReady);
 });
 ```
 
-### Параметры `waitForZoneJs`
+### Полный вызов
 
-| Параметр | Тип | По умолчанию | Описание |
-|---|---:|---|---|
-| `timeout` | number | `60000` | Максимальное ожидание Zone.js. |
-| `interval` | number | `10` | Частота проверки. |
+```js
+waitForZoneJs(60000, 10).then(function (zoneReady) {
+  if (!zoneReady) {
+    console.warn('Zone.js не появился');
+    return;
+  }
 
-### Важно
+  console.log('Zone.js готов');
+});
+```
 
-Этот блок может влиять на клики на странице, потому что вызывает `stopImmediatePropagation`. Не удаляй и не меняй его, если он нужен для конкретных Tilda/Zone.js сценариев.
+### Аргументы
 
-## UTM -> Для ссылок
+| Аргумент | Тип | По умолчанию | Что делает и когда нужен |
+|---|---|---|---|
+| `timeout` | number | `60000` | Максимальное ожидание Zone.js в ms. После него Promise резолвится `false`, а не reject-ится. |
+| `interval` | number | `10` | Интервал polling-а `window.Zone.current` в ms. |
 
-Самовызывающийся скрипт, который добавляет текущие query-параметры страницы ко всем ссылкам.
+### Автоматическое использование
 
-### Что делает
+`helpers.js` сам вызывает `waitForZoneJs()`. После успешного ожидания он добавляет document-level click handler с `event.stopImmediatePropagation()`.
 
-1. Сканирует все `<a href>`.
-2. Пропускает ссылки:
-   - `#anchor`,
-   - `mailto:`,
-   - `tel:`,
-   - `javascript:`,
-   - hash-ссылки на той же странице.
-3. Сохраняет исходный `href` в `a.dataset.hrefBase`.
-4. Добавляет текущие параметры `location.search` в ссылку.
-5. Следит за изменениями URL через patched `history.pushState` / `history.replaceState`.
-6. Следит за новыми DOM-узлами через `MutationObserver`.
-7. Перед кликом дополнительно патчит ссылку.
+Это поведение может влиять на другие click listeners на странице. Его нужно учитывать при диагностике конфликтов Tilda/Zone.js.
 
-### Пример
+## UTM/query параметры для ссылок {#service-link-params}
 
-Если текущая страница:
+Отдельный самовызывающийся блок автоматически переносит текущие query-параметры страницы в ссылки.
+
+Он:
+
+1. сканирует `<a href>`;
+2. пропускает anchors, `mailto:`, `tel:`, `javascript:` и hash той же страницы;
+3. сохраняет базовый URL ссылки;
+4. добавляет текущий `location.search`;
+5. отслеживает новые DOM-узлы;
+6. реагирует на `history.pushState`/`replaceState`;
+7. повторно актуализирует ссылку перед кликом.
+
+Пример:
 
 ```txt
-https://example.com/page?utm_source=test&utm_campaign=summer
+Страница: https://example.com/page?utm_source=test&utm_campaign=summer
+Ссылка:   https://example.com/final
+Результат:https://example.com/final?utm_source=test&utm_campaign=summer
 ```
 
-а ссылка:
-
-```html
-<a href="https://example.com/final">Финалка</a>
-```
-
-после патча станет:
-
-```txt
-https://example.com/final?utm_source=test&utm_campaign=summer
-```
-
-### Важно
-
-Этот блок работает независимо от `window.cp_tpl.utm`. Он берёт именно текущий `location.search`.
+Публичных вызываемых функций этот блок не экспортирует. Он работает независимо от `window.cp_tpl.utm()` и использует фактический текущий `location.search`.

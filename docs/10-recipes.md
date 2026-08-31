@@ -2,6 +2,8 @@
 layout: default
 title: Рецепты
 nav_order: 11
+search_keywords: >-
+  recipes рецепты примеры сценарии televox fillData hidden cjm b2b scroll copy forms patterns
 ---
 # Рецепты и частые сценарии
 

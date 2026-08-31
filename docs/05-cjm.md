@@ -2,24 +2,27 @@
 layout: default
 title: CJM и продукты
 nav_order: 6
+search_keywords: >-
+  cjm easyPaymentFlow product products продукт каталог configuration consultation button кнопка консультации
+  productId productConfigId cjmProductId cpProductId productIdMap productIdMaps select brand selectedStk
+  productKitCode kitTariffUuid tariffUuid serviceTypeKey auth anonymous unauth data-cp-product-id data-cp-brand
+  resolveProduct getProductConfigurations addProducts validateProducts initButton init product mapping
 ---
 # CJM и продукты
 
-CJM-модуль работает с `window.easyPaymentFlow` и продуктовым каталогом `window.cp_tpl.cjm.products`.
+CJM-модуль связывает Tilda select/кнопки с `window.easyPaymentFlow`, выбирает продукт из каталога и при необходимости заполняет hidden-поля формы.
 
-Главная задача модуля — понять, какой продукт выбран на лендинге, передать его в easyPaymentFlow и при необходимости заполнить hidden-поля формы.
-
-## Подготовка страницы
-
-На странице должен быть виджет:
+## Что должно быть на странице
 
 ```html
 <cism-easy-payment-flow-integration locale="ru"></cism-easy-payment-flow-integration>
 ```
 
-И должен быть загружен скрипт, который создаёт `window.easyPaymentFlow`.
+Также должен быть загружен скрипт, который создаёт `window.easyPaymentFlow` с методами `onReady`, `initProductConfigurations` и `initConsultationButton`.
 
 ## Структура продукта
+
+### STK-продукт
 
 ```js
 {
@@ -31,7 +34,7 @@ CJM-модуль работает с `window.easyPaymentFlow` и продукт�
 }
 ```
 
-Для kit-продуктов:
+### Kit-продукт
 
 ```js
 {
@@ -44,49 +47,38 @@ CJM-модуль работает с `window.easyPaymentFlow` и продукт�
 }
 ```
 
-### Поля продукта
+| Поле | Тип | Зачем нужно |
+|---|---|---|
+| `id` | string | Уникальный ID конфигурации. По нему CJM делает самый точный resolve. |
+| `label` | string | Название для `easyPaymentFlow`; также используется как fallback при поиске по значению select. |
+| `brand` | string | Дополнительное ограничение при resolve через `data-cp-brand`. |
+| `selectValues` | string[] | Возможные `select.value` и тексты option, соответствующие продукту. |
+| `selectedStk` | string | STK для обычного продукта; попадает в `serviceTypeKey`. |
+| `productKitCode` | string | Код product kit; попадает в одноимённый hidden input. |
+| `kitTariffUuid` | string | UUID тарифа kit-продукта; попадает в `tariffUuid`. |
 
-| Поле | Тип | Обязательное | Описание |
-|---|---:|---:|---|
-| `id` | string | да | Уникальный ID CJM-конфигурации. |
-| `label` | string | желательно | Название продукта для easyPaymentFlow. |
-| `brand` | string | нет | Используется для поиска по `data-cp-brand`. |
-| `selectValues` | string[] | нет | Значения/лейблы select, по которым можно найти продукт. |
-| `selectedStk` | string | для STK-продуктов | Передаётся в easyPaymentFlow как `selectedStk`. |
-| `productKitCode` | string | для kit-продуктов | Передаётся в easyPaymentFlow. Может повторяться. |
-| `kitTariffUuid` | string | для kit-продуктов | Уточняет тариф kit-продукта. |
-
-### Важные правила
-
-- `id` должен быть уникальным.
-- `productKitCode` может повторяться, если разные `kitTariffUuid`.
-- Если у нескольких продуктов одинаковые `brand + selectValues`, нужно уточнять продукт через `cjmProductId` или `productIdMap`.
-- Скрипт не выбирает первый продукт молча, если найдено несколько кандидатов.
+`id` должен быть уникальным. Если несколько продуктов совпали по `brand + selectValues`, библиотека намеренно не выбирает первый и пишет `console.error`.
 
 ## Приоритет источников продуктов
 
-CJM ищет продукты каскадом:
+1. `products` из текущего `window.cp_tpl.cjm.init({ products: [...] })` / аргумента helper-а.
+2. `window.cp_tpl.cjm.pageProducts`, добавленные через `window.cp_tpl.cjm.addProducts(...)`.
+3. Дефолтный `window.cp_tpl.cjm.products`.
 
-1. `products` из текущего `window.cp_tpl.cjm.init({ products: [...] })`.
-2. `pageProducts`, добавленные через `window.cp_tpl.cjm.addProducts(...)`.
-3. Дефолтный каталог `window.cp_tpl.cjm.products`.
+## Как выбирается product ID для select
 
-Если в более приоритетном источнике найден один подходящий продукт, нижние источники уже не проверяются.
+1. `data-cp-product-id` на выбранном `<option>`, самом `<select>` или ближайшем родителе.
+2. Поле формы `productIdFieldName`, затем `cjmProductId`, `productConfigId`, `cpProductId`.
+3. Для `cjm.init()` перед resolve применяется `productIdMap/productIdMaps`.
+4. Если ID нет — поиск по `brand + select.value/label`.
 
-## Как выбирается продукт
+Автоматически записанный CJM ID помечается `data-cp-tpl-cjm-product-source`, чтобы следующий resolve не принимал собственное старое значение за ручной выбор пользователя.
 
-Приоритет резолва:
+## `window.cp_tpl.cjm.init(config)` {#cjm-init}
 
-1. `data-cp-product-id` на option/select/обёртке.
-2. Hidden/input поле формы: `cjmProductId`, `productConfigId`, `cpProductId` или кастомное имя из `productIdFieldName`.
-3. `productIdMap` / `productIdMaps` из `cjm.init`.
-4. `brand + selectValues`, если найден ровно один кандидат.
-5. `selectValues` без brand, если найден ровно один кандидат.
-6. Если найдено несколько кандидатов — `console.error`, продукт не выбирается.
+Главная инициализация: регистрирует product configurations, слушает `change` у select, обрабатывает текущие значения и настраивает кнопки.
 
-## Один продукт на странице
-
-Самый надёжный способ — hidden-поле `cjmProductId`.
+### Стандартный вызов
 
 ```js
 window.cp_tpl.hiddenFields({
@@ -96,146 +88,194 @@ window.cp_tpl.hiddenFields({
 window.cp_tpl.cjm.init();
 ```
 
-## Несколько продуктов через select
+### Полный вызов
+
+```js
+window.cp_tpl.cjm.init({
+  products: [
+    {
+      brand: 'skyeng',
+      label: 'Английский',
+      selectValues: ['Английский', 'english'],
+      id: 'adult_english_not_native_speaker_premium',
+      selectedStk: 'english_adult_not_native_speaker_premium'
+    }
+  ],
+
+  authPrefix: 'auth',
+  anonymousPrefix: 'unauth',
+  selectSelector: 'select[data-use-cjm]',
+  scanSelector: 'select',
+  initCurrentValues: true,
+  createHiddenFields: true,
+
+  extraParams: {
+    campaignType: 'landing'
+  },
+  comment: 'landing-comment',
+  productIdFieldName: 'cjmProductId',
+
+  productIdMap: {
+    'Английский': 'adult_english_not_native_speaker_premium'
+  },
+  productIdMaps: [
+    {
+      selectSelector: 'select[name="grade"]',
+      selector: 'select[name="grade"]',
+      map: {
+        '5 класс': 'kid_skysmart_homeschooling_5_grade'
+      },
+      values: {
+        // Alias для map; используется, если map не задан.
+      }
+    }
+  ],
+
+  resolveDelay: 0,
+
+  buttons: [
+    {
+      selector: '.consultation-btn',
+      product: {
+        brand: 'skyeng',
+        label: 'Английский',
+        selectValues: ['Английский', 'english'],
+        id: 'adult_english_not_native_speaker_premium',
+        selectedStk: 'english_adult_not_native_speaker_premium'
+      },
+      productId: 'adult_english_not_native_speaker_premium',
+      brand: 'skyeng',
+      value: 'Английский',
+      selectedValue: 'Английский',
+      label: 'Английский',
+      selectedLabel: 'Английский',
+      products: [],
+      extraParams: {},
+      comment: 'button-comment',
+      analyticsData: { blockName: 'hero' },
+      blockName: 'hero',
+      productIdFieldName: 'cjmProductId'
+    }
+  ],
+
+  buttonSelector: '[data-cp-cjm-button]',
+  scanButtons: true,
+
+  getAuthButtonSelector: function (select, product) {
+    return '.' + select.name + '-btn';
+  },
+
+  onFillForm: function (form, product, select) {
+    console.log(form, product, select);
+  },
+
+  alertOnDuplicateIds: false
+});
+```
+
+`selector` внутри `productIdMaps` — alias для `selectSelector`; `values` — alias для `map`. В реальном конфиге лучше использовать по одному варианту alias, чтобы не создавать неоднозначность.
+
+### Аргументы `config`
+
+| Аргумент | Тип | По умолчанию | Что делает и когда нужен |
+|---|---|---|---|
+| `products` | array | `[]` | Кастомный каталог текущей страницы с самым высоким приоритетом. |
+| `authPrefix` | string | `auth` | Если `select.name` начинается с этого prefix, select работает в auth-режиме и инициализирует consultation button. |
+| `anonymousPrefix` | string | `unauth` | Prefix anonymous-select, который заполняет hidden-поля формы. |
+| `selectSelector` | string | — | Принудительно считать совпавший `<select>` CJM-select, даже если prefix/data mode отсутствует. |
+| `scanSelector` | string | `select` | Какие select обработать при старте, если `initCurrentValues !== false`. |
+| `initCurrentValues` | boolean | `true` | Сразу обработать уже выбранные значения, а не ждать первого `change`. |
+| `createHiddenFields` | boolean | `true` | В anonymous-режиме создавать недостающие `serviceTypeKey`, `productKitCode`, `tariffUuid`, `cjmProductId`. При `false` обновляются только существующие inputs. |
+| `extraParams` | object | — | Добавляется в UTM marks, передаваемые consultation button. |
+| `comment` | string | — | Комментарий для consultation button. Приоритет: явный comment → `extraParams.comment` → hidden `comment`. |
+| `productIdFieldName` | string | `cjmProductId` | Имя кастомного hidden input для product ID. При чтении также проверяются стандартные aliases. |
+| `productIdMap` | object | — | Быстрая общая карта выбранного value/label → product ID. |
+| `productIdMaps` | array | — | Несколько карт, опционально ограниченных конкретным select через `selectSelector/selector`. |
+| `resolveDelay` | number | `0` | Задержка в ms после `change` перед resolve. Нужна, если другой обработчик сначала обновляет hidden fields. |
+| `buttons` | array | — | Явные конфиги consultation buttons; каждый элемент может быть строкой-селектором или объектом как у `cjm.initButton`. |
+| `buttonSelector` | string | три data-селектора | Какие data-кнопки автоматически сканировать. |
+| `scanButtons` | boolean | `true` | Включить автоскан data-кнопок. |
+| `getAuthButtonSelector` | function | `'.' + select.name + '-btn'` | Позволяет вычислить selector auth-кнопки по `(select, product)`. |
+| `onFillForm` | function | — | Callback `(form, product, select)` после заполнения anonymous hidden fields. |
+| `alertOnDuplicateIds` | boolean | `false` | Помимо `console.error` показывает `window.alert` при дублирующихся product IDs в `products`. |
+
+### `productIdMap` и `productIdMaps`
+
+Значение карты может быть строкой либо объектом с `productId`, `id` или `value`:
 
 ```js
 window.cp_tpl.cjm.init({
   productIdMap: {
     'Английский': 'adult_english_not_native_speaker_premium',
-    'Французский': 'adult_french_not_native_speaker_premium'
-  }
-});
-```
-
-`productIdMap` сам обновит hidden-поле `cjmProductId` в текущей форме.
-
-Значения map можно писать строкой:
-
-```js
-productIdMap: {
-  'Английский': 'adult_english_not_native_speaker_premium'
-}
-```
-
-или объектом:
-
-```js
-productIdMap: {
-  'Английский': {
-    productId: 'adult_english_not_native_speaker_premium'
-  }
-}
-```
-
-Также поддерживаются ключи по `select.value`, тексту выбранного option и нормализованным значениям.
-
-## Несколько разных select
-
-```js
-window.cp_tpl.cjm.init({
-  productIdMaps: [
-    {
-      selectSelector: 'select[name="subject"]',
-      map: {
-        'Английский': 'adult_english_not_native_speaker_premium',
-        'Французский': 'adult_french_not_native_speaker_premium'
-      }
-    },
-    {
-      selectSelector: 'select[name="grade"]',
-      map: {
-        '5 класс': 'kid_skysmart_homeschooling_5_grade',
-        '6 класс': 'kid_skysmart_homeschooling_6_grade'
-      }
+    'Французский': {
+      productId: 'adult_french_not_native_speaker_premium'
     }
-  ]
+  }
 });
 ```
 
-Вместо `map` можно использовать `values`.
+Ключи проверяются по `select.value`, тексту selected option и их нормализованным lowercase-вариантам.
 
-## `window.cp_tpl.cjm.init(config)`
+### Режимы select
 
-Главный метод инициализации CJM.
+Режим определяется по `data-cp-mode` (`auth/authorized/anonymous/unauth`), prefix имени select, либо наличию `brand/productId`. Anonymous-select заполняет форму; auth-select вызывает `easyPaymentFlow.initConsultationButton`.
 
-```js
-window.cp_tpl.cjm.init({
-  products: [],
-  productIdMap: {},
-  buttons: []
-});
-```
+## `window.cp_tpl.cjm.addProducts(products, config)` {#cjm-add-products}
 
-### Параметры config
+Добавляет продукты в `window.cp_tpl.cjm.pageProducts`.
 
-| Параметр | Тип | По умолчанию | Описание |
-|---|---:|---|---|
-| `products` | array | `[]` | Кастомные продукты страницы. Имеют высший приоритет. |
-| `authPrefix` | string | `auth` | Prefix имени select для auth-режима. |
-| `anonymousPrefix` | string | `unauth` | Prefix имени select для anonymous-режима. |
-| `selectSelector` | string | — | Принудительно обрабатывать select по селектору. |
-| `scanSelector` | string | `select` | Какие select просканировать при инициализации. |
-| `initCurrentValues` | boolean | `true` | Обработать текущие значения select при старте. |
-| `createHiddenFields` | boolean | `true` | Создавать hidden-поля `serviceTypeKey`, `productKitCode`, `tariffUuid`, `cjmProductId`. |
-| `extraParams` | object | — | Доп. параметры для `utmMarks`. |
-| `comment` | string | — | Комментарий для consultation button. |
-| `productIdFieldName` | string | `cjmProductId` | Кастомное имя hidden-поля с product ID. |
-| `productIdMap` | object | — | Быстрая карта `select value -> product id`. |
-| `productIdMaps` | array | — | Несколько карт для разных select. |
-| `resolveDelay` | number | `0` | Задержка перед резолвом после `change`, чтобы другие обработчики успели обновить hidden-поля. |
-| `buttons` | array | — | Явные CJM-кнопки. |
-| `buttonSelector` | string | data-селекторы | Селектор data-кнопок для автосканирования. |
-| `scanButtons` | boolean | `true` | Сканировать data-кнопки. |
-| `getAuthButtonSelector` | function | — | Функция получения селектора auth-кнопки. |
-| `onFillForm` | function | — | Колбэк после заполнения hidden-полей формы. |
-
-### Важный нюанс
-
-`cjm.init` желательно вызывать один раз на странице с полным конфигом. Внутренний `change`-обработчик биндуется один раз.
-
-## Режимы select
-
-CJM понимает два режима:
-
-| Режим | Что делает |
-|---|---|
-| `anonymous` / `unauth` | Заполняет hidden-поля формы: `serviceTypeKey`, `productKitCode`, `tariffUuid`, `cjmProductId`. |
-| `auth` / `authorized` | Инициализирует consultation button для авторизованного сценария. |
-
-Режим определяется так:
-
-1. `data-cp-mode` на select или родителях.
-2. Имя select начинается с `authPrefix`.
-3. Имя select начинается с `anonymousPrefix`.
-4. Если есть `brand` или `productId`, режим считается `anonymous`.
-
-## `window.cp_tpl.cjm.addProducts(products, config)`
-
-Добавляет продукты страницы в `cp.cjm.pageProducts`.
+### Стандартный вызов
 
 ```js
 window.cp_tpl.cjm.addProducts([
   {
-    brand: 'skyeng',
+    id: 'adult_english_course_elementary',
     label: 'Английский',
     selectValues: ['Английский'],
-    id: 'adult_english_course_elementary',
     selectedStk: 'english_adult_not_native_speaker_course_elementary'
   }
 ]);
 ```
 
-### Параметры config
+### Полный вызов
 
-| Параметр | Тип | По умолчанию | Описание |
-|---|---:|---|---|
-| `alertOnDuplicateIds` | boolean | `false` | Показывать `alert`, если найдены дубли `id`. |
+```js
+window.cp_tpl.cjm.addProducts(
+  [
+    {
+      brand: 'skyeng',
+      label: 'Английский',
+      selectValues: ['Английский'],
+      id: 'adult_english_course_elementary',
+      selectedStk: 'english_adult_not_native_speaker_course_elementary',
+      productKitCode: '',
+      kitTariffUuid: ''
+    }
+  ],
+  {
+    alertOnDuplicateIds: false
+  }
+);
+```
 
-Метод пишет `console.error`, если находит дублирующиеся `id`.
+| Аргумент | Тип | По умолчанию | Что делает |
+|---|---|---|---|
+| `products` | array | `[]` | Продукты, добавляемые в page-level каталог. |
+| `config.alertOnDuplicateIds` | boolean | `false` | Показывать alert при дубликатах `id`; `console.error` пишется всегда. |
 
-## `window.cp_tpl.cjm.validateProducts(products, config)`
+Функция ничего не возвращает.
 
-Только проверяет продукты на дубли `id`, не добавляя их в каталог.
+## `window.cp_tpl.cjm.validateProducts(products, config)` {#cjm-validate-products}
+
+Проверяет product IDs на дубли, но не добавляет продукты в каталог.
+
+### Стандартный вызов
+
+```js
+window.cp_tpl.cjm.validateProducts(products);
+```
+
+### Полный вызов
 
 ```js
 window.cp_tpl.cjm.validateProducts(products, {
@@ -243,9 +283,16 @@ window.cp_tpl.cjm.validateProducts(products, {
 });
 ```
 
-## `window.cp_tpl.cjm.initButton(buttonConfig)`
+| Аргумент | Тип | По умолчанию | Что делает |
+|---|---|---|---|
+| `products` | array | `[]` | Проверяемый список. |
+| `config.alertOnDuplicateIds` | boolean | `false` | Дополнительно показать alert. |
 
-Инициализирует одну CJM-кнопку.
+## `window.cp_tpl.cjm.initButton(buttonConfig)` {#cjm-init-button}
+
+Инициализирует одну consultation button после готовности `easyPaymentFlow`.
+
+### Стандартный вызов
 
 ```js
 window.cp_tpl.cjm.initButton({
@@ -254,26 +301,55 @@ window.cp_tpl.cjm.initButton({
 });
 ```
 
-### buttonConfig
+Также допустима строка: `window.cp_tpl.cjm.initButton('.consultation-btn')`, если product можно однозначно получить из data-атрибутов/формы.
 
-| Параметр | Тип | Описание |
-|---|---:|---|
-| `selector` | string | CSS-селектор кнопки. |
-| `product` | object | Продукт напрямую. |
-| `productId` | string | ID продукта. |
-| `brand` | string | Brand для fallback-поиска. |
-| `value` / `selectedValue` | string | Значение для fallback-поиска. |
-| `label` / `selectedLabel` | string | Лейбл для fallback-поиска. |
-| `products` | array | Кастомный каталог для кнопки. |
-| `extraParams` | object | Доп. UTM-параметры. |
-| `comment` | string | Комментарий. |
-| `analyticsData` | object | Analytics data для easyPaymentFlow. |
-| `blockName` | string | Имя блока. |
-| `productIdFieldName` | string | Кастомное имя поля product ID. |
+### Полный вызов
 
-## Data-кнопки
+```js
+window.cp_tpl.cjm.initButton({
+  selector: '.consultation-btn',
+  product: {
+    id: 'adult_english_not_native_speaker_premium',
+    label: 'Английский',
+    selectedStk: 'english_adult_not_native_speaker_premium'
+  },
+  productId: 'adult_english_not_native_speaker_premium',
+  brand: 'skyeng',
+  value: 'Английский',
+  selectedValue: 'Английский',
+  label: 'Английский',
+  selectedLabel: 'Английский',
+  products: [],
+  extraParams: { sourceBlock: 'hero' },
+  comment: 'hero-button',
+  analyticsData: { blockName: 'hero' },
+  blockName: 'hero',
+  productIdFieldName: 'cjmProductId'
+});
+```
 
-Если `scanButtons !== false`, библиотека ищет кнопки по селектору:
+`product` имеет наивысший приоритет. В контексте выбора `value` и `selectedValue` — aliases, как и `label`/`selectedLabel`.
+
+### Аргументы `buttonConfig`
+
+| Аргумент | Тип | Что делает |
+|---|---|---|
+| `selector` | string | CSS-селектор кнопки; обязателен для реальной инициализации. |
+| `product` | object | Готовый product object без resolve. |
+| `productId` | string | Точный ID для resolve. |
+| `brand` | string | Ограничивает fallback-поиск по value/label. |
+| `value` / `selectedValue` | string | Значение для fallback-поиска продукта. |
+| `label` / `selectedLabel` | string | Человекочитаемый label для fallback-поиска. |
+| `products` | array | Кастомные продукты с высшим приоритетом только для этой кнопки. |
+| `extraParams` | object | Доп. параметры для UTM marks. |
+| `comment` | string | Комментарий для consultation flow. |
+| `analyticsData` | object | Передаётся в `easyPaymentFlow.initConsultationButton`. |
+| `blockName` | string | Используется для дефолтного `analyticsData.blockName`, если `analyticsData` не передан. |
+| `productIdFieldName` | string | Кастомное имя product ID поля при чтении контекста ближайшей формы. |
+
+## Data-кнопки {#cjm-data-buttons}
+
+По умолчанию `cjm.init()` ищет:
 
 ```txt
 [data-cp-cjm-button],
@@ -281,37 +357,94 @@ window.cp_tpl.cjm.initButton({
 [data-cp-product-id].cp-cjm-button
 ```
 
-Пример:
+Поддерживаемые data attrs: `data-cp-product-id`, `data-cp-brand`, `data-cp-value`, `data-cp-product-value`, `data-cp-label`, `data-cp-block-name`, `data-cp-comment`.
 
 ```html
-<a class="cp-cjm-button" data-cp-product-id="adult_english_not_native_speaker_premium">
+<a
+  class="cp-cjm-button"
+  data-cp-product-id="adult_english_not_native_speaker_premium"
+  data-cp-block-name="hero"
+  data-cp-comment="hero-button"
+>
   Записаться
 </a>
 ```
 
-## `window.cp_tpl.cjm.resolveProduct(select, configOrProducts)`
+## `window.cp_tpl.cjm.resolveProduct(select, configOrProducts)` {#cjm-resolve-product}
 
-Публичная функция для отладки резолва продукта по select.
+Публичный helper для ручного resolve продукта по конкретному `<select>`.
+
+### Стандартный вызов
+
+```js
+var product = window.cp_tpl.cjm.resolveProduct(
+  document.querySelector('select[name="subject"]')
+);
+```
+
+### Полный вызов: config object
 
 ```js
 var product = window.cp_tpl.cjm.resolveProduct(
   document.querySelector('select[name="subject"]'),
   {
-    products: customProducts
+    products: customProducts,
+    productIdFieldName: 'cjmProductId'
   }
 );
-
-console.log(product);
 ```
 
-## `window.cp_tpl.cjm.getProductConfigurations(configOrProducts)`
-
-Возвращает массив конфигураций для `easyPaymentFlow.initProductConfigurations`.
+### Альтернативный полный вызов: массив
 
 ```js
-var configs = window.cp_tpl.cjm.getProductConfigurations({
-  products: customProducts
-});
+var product = window.cp_tpl.cjm.resolveProduct(
+  document.querySelector('select[name="subject"]'),
+  customProducts
+);
 ```
 
-Дедупликация идёт по `id`, с приоритетом источников: `products` из `cjm.init`, затем `pageProducts`, затем дефолтный каталог.
+| Аргумент | Тип | По умолчанию | Что делает |
+|---|---|---|---|
+| `select` | `HTMLSelectElement` | — | Select, из которого читаются option, value, label, data attrs и ближайшая форма. |
+| `configOrProducts` | object/array | — | Массив трактуется как custom products. Объект поддерживает `products` и `productIdFieldName`; затем используются `pageProducts` и дефолтный каталог. |
+
+Важно: `resolveProduct()` сам не применяет `productIdMap/productIdMaps`; эта предварительная логика выполняется внутри `cjm.init()` при обработке select.
+
+Возвращает product object либо `null`.
+
+## `window.cp_tpl.cjm.getProductConfigurations(configOrProducts)` {#cjm-product-configurations}
+
+Преобразует каталог в формат для `easyPaymentFlow.initProductConfigurations` и удаляет дубли по `id` с сохранением приоритета источников.
+
+### Стандартный вызов
+
+```js
+var configurations = window.cp_tpl.cjm.getProductConfigurations();
+```
+
+### Полный вызов
+
+```js
+var configurations = window.cp_tpl.cjm.getProductConfigurations({
+  products: customProducts
+});
+
+// Или напрямую массив:
+var same = window.cp_tpl.cjm.getProductConfigurations(customProducts);
+```
+
+| Аргумент | Тип | Что делает |
+|---|---|---|
+| `configOrProducts` | object/array | Массив задаёт custom products; объект читает поле `products`. После него добавляются `pageProducts` и дефолтный каталог. |
+
+Возвращаемый элемент содержит только поддерживаемые flow-поля:
+
+```js
+{
+  id: product.id,
+  label: product.label,
+  selectedStk: product.selectedStk,       // если задан
+  productKitCode: product.productKitCode, // если задан
+  kitTariffUuid: product.kitTariffUuid    // если задан
+}
+```

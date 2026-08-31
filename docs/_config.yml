@@ -11,6 +11,17 @@ color_scheme: dark
 search_enabled: true
 heading_anchors: true
 
+# Search: split API pages into smaller searchable sections and index aliases/keywords.
+search.heading_level: 3
+search.previews: 3
+search.preview_words_before: 5
+search.preview_words_after: 12
+search.rel_url: true
+search.button: true
+search.focus_shortcut_key: "k"
+# Split dotted/underscored API names into useful tokens: cp_tpl.forms.selectAll -> cp tpl forms selectAll.
+search.tokenizer_separator: /[\s\-\/\._]+/
+
 # Top-right links
 aux_links:
   GitHub:
