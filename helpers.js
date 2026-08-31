@@ -1,4 +1,4 @@
-// cp_tpl core modules v14
+// cp_tpl core modules v15
 // COMMIT TO PURGE LATEST 
 
 (function (window, document) {
@@ -1696,15 +1696,16 @@
     ].join(',');
 
     var inputsBoxSelector = config.inputsBoxSelector || '.t-form__inputsbox';
-    var quietTime = typeof config.quietTime === 'number' ? config.quietTime : 0;
-    var maxWait = config.maxWait || 15000;
+    var quietTime = typeof config.quietTime === 'number' ? config.quietTime : 3000;
+    var maxWait = typeof config.maxWait === 'number' ? config.maxWait : 15000;
     var globalName = config.globalName || 'selectedFormIds';
-    var waitForStableDom = config.waitForStableDom === true;
+    var waitForStableDom = config.waitForStableDom !== false;
 
     var observer = null;
     var quietTimer = null;
     var maxTimer = null;
     var isFinished = false;
+    var knownForms = [];
 
     window[globalName] = Array.isArray(window[globalName]) ? window[globalName] : [];
 
@@ -1775,42 +1776,110 @@
     }
 
     function scheduleFinish() {
-      var forms = getForms();
-
-      if (!forms.length) return;
-
       clearTimeout(quietTimer);
 
-      if (!waitForStableDom && quietTime <= 0) {
+      if (!waitForStableDom || quietTime <= 0) {
         finish('формы найдены');
         return;
       }
 
       quietTimer = setTimeout(function () {
-        finish('DOM стабилизировался');
+        finish('набор форм стабилизировался');
       }, quietTime);
     }
 
-    observer = new MutationObserver(scheduleFinish);
+    function rememberNewForms(forms) {
+      var hasNewForms = false;
+
+      forms.forEach(function (form) {
+        if (knownForms.indexOf(form) !== -1) return;
+
+        knownForms.push(form);
+        hasNewForms = true;
+      });
+
+      return hasNewForms;
+    }
+
+    function scanForms() {
+      if (isFinished) return;
+
+      var forms = getForms();
+
+      if (!forms.length) return;
+
+      if (!rememberNewForms(forms)) {
+        return;
+      }
+
+      scheduleFinish();
+    }
+
+    function nodeMayContainForm(node) {
+      if (!node || node.nodeType !== 1) return false;
+
+      if (node.matches && node.matches(formSelector)) {
+        return true;
+      }
+
+      if (node.matches && node.matches(inputsBoxSelector)) {
+        return true;
+      }
+
+      if (node.querySelector) {
+        if (node.querySelector(formSelector)) {
+          return true;
+        }
+
+        if (node.querySelector(inputsBoxSelector)) {
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+    function mutationsMayContainForm(mutations) {
+      for (var i = 0; i < mutations.length; i++) {
+        var mutation = mutations[i];
+
+        for (var j = 0; j < mutation.addedNodes.length; j++) {
+          if (nodeMayContainForm(mutation.addedNodes[j])) {
+            return true;
+          }
+        }
+      }
+
+      return false;
+    }
+
+    observer = new MutationObserver(function (mutations) {
+      if (!mutationsMayContainForm(mutations)) {
+        return;
+      }
+
+      scanForms();
+    });
 
     observer.observe(document.documentElement, {
       childList: true,
       subtree: true
     });
 
-    document.addEventListener('DOMContentLoaded', scheduleFinish);
-    window.addEventListener('load', scheduleFinish);
+    document.addEventListener('DOMContentLoaded', scanForms);
+    window.addEventListener('load', scanForms);
 
     maxTimer = setTimeout(function () {
       finish('достигнут MAX_WAIT');
     }, maxWait);
 
-    scheduleFinish();
+    scanForms();
 
     return {
       getFormIds: function () {
         return window[globalName];
       },
+      scan: scanForms,
       finish: finish
     };
   };
