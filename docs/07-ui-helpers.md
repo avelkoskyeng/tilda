@@ -3,9 +3,24 @@ layout: default
 title: UI-хелперы
 nav_order: 8
 search_keywords: >-
-  ui marquee бегущая строка ticker reverse media video audio play pause mp3 m4a progress timer
-  scroll indicator dots cards horizontal scroll middle spacer viewport height empty spacer switch blocks tabs витрина
-  copy clipboard промокод скопировать alert notification
+  ui helpers dom интерфейс tilda zero block визуальные хелперы
+search_aliases:
+  marquee: >-
+    marquee бегущая строка бегущую строку бегущий текст ticker infinite loop бесконечная лента
+    бесконечная строка автопрокрутка reverse speed minWidthFactor
+  media: >-
+    media video audio видео аудио плеер play pause проигрывание mp3 m4a progress timer таймер
+  scroll-indicator: >-
+    scrollIndicator scroll indicator индикатор скролла точки dots cards горизонтальный скролл
+    horizontal scroll middle start
+  spacer: >-
+    spacer пустой блок отступ высота viewport заполнить экран empty spacer safetyGap
+  fit-tilda-spacer: >-
+    fitTildaSpacer пересчитать spacer высоту отступ viewport вручную
+  switch-blocks: >-
+    switchBlocks switch blocks переключить блоки табы tabs витрина desktop mobile triggers
+  copy: >-
+    copy clipboard копировать скопировать промокод буфер обмена alert notification уведомление
 ---
 # UI-хелперы
 

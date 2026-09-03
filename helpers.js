@@ -3294,6 +3294,18 @@
         continue;
       }
 
+      // cjmProductId passed through cp.hiddenFields is a static form value,
+      // not a source of truth for CJM product resolution. Dynamic CJM values
+      // written by map/auto keep cpTplCjmProductSource and are still supported.
+      if (
+        options.ignoreStaticHiddenFieldsProductId === true &&
+        input.dataset &&
+        input.dataset.cpTplHiddenFieldsInited === '1' &&
+        !input.dataset.cpTplCjmProductSource
+      ) {
+        continue;
+      }
+
       return input;
     }
 
@@ -3493,7 +3505,8 @@
         select.getAttribute('data-cp-product-id') ||
         getClosestDataAttr(select, 'data-cp-product-id') ||
         getProductIdFromForm(form, config, {
-          ignoreAutoProductId: true
+          ignoreAutoProductId: true,
+          ignoreStaticHiddenFieldsProductId: true
         }),
 
       selectedValue: select.value,
@@ -3517,7 +3530,9 @@
       productId:
         element.getAttribute('data-cp-product-id') ||
         getClosestDataAttr(element, 'data-cp-product-id') ||
-        getProductIdFromForm(form, config),
+        getProductIdFromForm(form, config, {
+          ignoreStaticHiddenFieldsProductId: true
+        }),
 
       selectedValue:
         element.getAttribute('data-cp-value') ||
@@ -3597,7 +3612,7 @@
     }
 
     if (candidates.length > 1) {
-      console.error('[cp_tpl.cjm] Найдено несколько продуктов для одного выбора. Уточни продукт через cjmProductId, productIdMap или data-cp-product-id.', {
+      console.error('[cp_tpl.cjm] Найдено несколько продуктов для одного выбора. Уточни продукт через productIdMap, data-cp-product-id или явный productId в cjm.initButton.', {
         source: source.name,
         context: context,
         candidates: candidates

@@ -21,24 +21,30 @@ https://avelkoskyeng.github.io/tilda/
 
 ## Поиск
 
-Just the Docs search дополнен полем `search_keywords`, которое подмешивается в Lunr index через:
+Поиск Just the Docs расширен двумя слоями:
+
+- `search_keywords` — общие aliases страницы;
+- `search_aliases` — aliases конкретной секции/API-метода по её anchor.
+
+Оба поля попадают в Lunr index через:
 
 ```txt
 docs/_includes/lunr/custom-data.json
 docs/_includes/lunr/custom-index.js
 ```
 
-Это позволяет находить API по aliases, русским формулировкам, аргументам и частым задачам, даже если конкретная фраза не встречается в основном тексте страницы.
+В `custom-index.js` также заменён стандартный ASCII-oriented Lunr trimmer на вариант, сохраняющий кириллицу. Поэтому запросы вроде `бегущая строка` могут находить `window.cp_tpl.marquee`, а `редирект после формы` — `window.cp_tpl.t396Redirect`.
 
 ## Проверка покрытия API
 
-После изменения публичных функций запусти:
+После изменения публичных функций или поисковых aliases запусти:
 
 ```bash
 node scripts/check-docs-api.cjs
+node scripts/check-docs-search.cjs
 ```
 
-Команда падает, если публичная функция из `helpers.js` или `terms.js` нигде не упомянута в Markdown docs.
+Первая команда проверяет покрытие публичного API документацией. Вторая проверяет кириллический trimmer, секционные aliases и соответствие alias-ключей реальным anchors.
 
 ## Структура
 
@@ -49,6 +55,7 @@ style_tpl.css
 readme.md
 scripts/
   check-docs-api.cjs
+  check-docs-search.cjs
 docs/
   _config.yml
   _includes/

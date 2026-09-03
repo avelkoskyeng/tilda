@@ -30,8 +30,7 @@ search_keywords: >-
     subscription_attributes_comment: '',
     serviceTypeKey: '',
     productKitCode: '',
-    tariffUuid: '',
-    cjmProductId: ''
+    tariffUuid: ''
   });
 </script>
 ```
@@ -78,17 +77,18 @@ search_keywords: >-
 
 ## 5. Подключить CJM
 
-### Один продукт на странице
+### Одна CJM-кнопка без выбора предмета
 
 ```html
 <script>
-  window.cp_tpl.hiddenFields({
-    cjmProductId: 'adult_english_not_native_speaker_premium'
+  window.cp_tpl.cjm.initButton({
+    selector: '.auth-btn',
+    productId: 'adult_english_not_native_speaker_premium'
   });
-
-  window.cp_tpl.cjm.init();
 </script>
 ```
+
+Для такого сценария `cjmProductId` через `hiddenFields()` не нужен: кнопка может находиться вне формы, поэтому продукт задаётся прямо в конфиге кнопки.
 
 ### Несколько продуктов через select
 
