@@ -1,3 +1,4 @@
 {%- capture newline %}
 {% endcapture -%}
 "search_keywords": {{ include.page.search_keywords | default: "" | markdownify | replace:newline,' ' | strip_html | normalize_whitespace | strip | jsonify }},
+"search_aliases": {{ include.page.search_aliases | jsonify }},

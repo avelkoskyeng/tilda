@@ -3,9 +3,19 @@ layout: default
 title: B2B order
 nav_order: 7
 search_keywords: >-
-  b2b order заявка заказ api corp skyeng hit hitId skyengTrackHits timezone zone getMeta getMetaAsync
-  form snapshot payload child parent childName parentName parentEmail parentPhone loginLink thankyou wasBump
-  transformPayload onSuccess onError отправка формы post
+  b2b order заявка заказ api corp skyeng форма payload cp_tpl b2b
+search_aliases:
+  b2b-hit: >-
+    b2b hit hitId skyengTrackHits tracking hit получить hit id
+  b2b-zone: >-
+    b2b zone timezone таймзона часовой пояс определить зону
+  b2b-get-meta: >-
+    getMeta get meta b2b metadata tracking meta получить мета синхронно
+  b2b-get-meta-async: >-
+    getMetaAsync get meta async b2b metadata tracking meta получить мета асинхронно wait
+  b2b-order: >-
+    b2b order заявка заказ отправка формы post form snapshot payload child parent childName
+    parentName parentEmail parentPhone loginLink thankyou wasBump transformPayload onSuccess onError
 ---
 # B2B order
 

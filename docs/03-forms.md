@@ -3,9 +3,16 @@ layout: default
 title: Формы
 nav_order: 4
 search_keywords: >-
-  forms form форма формы выбрать все формы select all selectedFormIds form ids cp-auto-form
-  fill data page data share skyengTildaPageDataShare getData zero block rec customer integration fieldsMap
-  televox import group utmMarks offset timezone rules hidden fields лид заявка
+  forms form форма формы tilda формы cp_tpl forms helpers
+search_aliases:
+  forms-select-all: >-
+    selectAll select all выбрать все формы найти формы selectedFormIds form ids cp-auto-form
+  forms-fill-data: >-
+    fillData fill data заполнить форму данными данные с предыдущей страницы page data share
+    skyengTildaPageDataShare getData zero block rec customer integration fieldsMap
+  forms-televox: >-
+    televox телевокс import group utmMarks offset timezone rules hidden fields лид заявка
+    подготовить форму televox скрытые поля
 ---
 # Формы
 

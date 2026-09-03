@@ -53,15 +53,16 @@ form.querySelector('input[name="serviceTypeKey"]').value = 'mini_course_kids_mat
 
 `hiddenFields` не откатит значение назад, если `overwriteExisting` не включён.
 
-## CJM: один продукт на форме
+## CJM: одна кнопка без выбора предмета
 
 ```js
-window.cp_tpl.hiddenFields({
-  cjmProductId: 'adult_english_not_native_speaker_premium'
+window.cp_tpl.cjm.initButton({
+  selector: '.auth-btn',
+  productId: 'adult_english_not_native_speaker_premium'
 });
-
-window.cp_tpl.cjm.init();
 ```
+
+`cjmProductId` через `hiddenFields()` здесь не нужен: продукт привязан к самой CJM-кнопке, а кнопка может находиться вне формы.
 
 ## CJM: несколько продуктов через select
 
@@ -118,7 +119,7 @@ window.cp_tpl.cjm.init({
 });
 ```
 
-Если оба продукта могут матчиться на один select, уточняй через `cjmProductId` или `productIdMap`.
+Если оба продукта могут матчиться на один select, уточняй через `productIdMap` или `data-cp-product-id`.
 
 ## B2B order + свой редирект
 

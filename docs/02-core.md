@@ -3,9 +3,24 @@ layout: default
 title: Core helpers
 nav_order: 3
 search_keywords: >-
-  gtm google tag manager analytics dataLayer tag manager zoom scale масштаб zero block
-  logo логотип brand skyeng skysmart b2b skypro t396 t396_onSuccess success submit redirect
-  редирект после формы viewport meta tablet планшет load script загрузить скрипт widgets widgets-host
+  core helpers базовые хелперы cp_tpl tilda zero block
+search_aliases:
+  gtm: >-
+    gtm google tag manager analytics аналитика dataLayer tag manager метрика tracking
+  zoom: >-
+    zoom scale масштаб адаптивный масштаб zero block resize transform
+  logo: >-
+    logo логотип brand бренд skyeng skysmart b2b skypro заменить логотип
+  t396-success: >-
+    t396Success t396 success submit успешная отправка формы callback t396_onSuccess
+  t396-redirect: >-
+    t396Redirect redirect редирект после формы переход после отправки формы success url
+  viewport: >-
+    viewport meta tablet планшет адаптивность viewport meta tag
+  load-script: >-
+    loadScript load script загрузить скрипт подключить js script async defer
+  widgets: >-
+    widgets widget widgets-host виджет загрузчик widgets loader
 ---
 # Core helpers
 

@@ -3,10 +3,23 @@ layout: default
 title: CJM и продукты
 nav_order: 6
 search_keywords: >-
-  cjm easyPaymentFlow product products продукт каталог configuration consultation button кнопка консультации
-  productId productConfigId cjmProductId cpProductId productIdMap productIdMaps select brand selectedStk
-  productKitCode kitTariffUuid tariffUuid serviceTypeKey auth anonymous unauth data-cp-product-id data-cp-brand
-  resolveProduct getProductConfigurations addProducts validateProducts initButton init product mapping
+  cjm easyPaymentFlow product products продукт каталог cp_tpl product mapping
+search_aliases:
+  cjm-init: >-
+    cjm init easyPaymentFlow инициализация cjm продукты productIdMap productIdMaps select brand selectedStk
+    productKitCode kitTariffUuid tariffUuid serviceTypeKey auth anonymous unauth
+  cjm-add-products: >-
+    addProducts add products добавить продукты каталог pageProducts cjm
+  cjm-validate-products: >-
+    validateProducts validate products проверить продукты валидация каталога дубли product id
+  cjm-init-button: >-
+    initButton init button кнопка консультации consultation button productId data-cp-product-id data-cp-brand
+  cjm-data-buttons: >-
+    data кнопки data button data-cp-product-id data-cp-brand cjm кнопка консультации без js конфига
+  cjm-resolve-product: >-
+    resolveProduct resolve product найти продукт определить продукт select brand value label productId
+  cjm-product-configurations: >-
+    getProductConfigurations product configurations получить конфигурации продуктов конфиги cjm
 ---
 # CJM и продукты
 
@@ -67,12 +80,25 @@ CJM-модуль связывает Tilda select/кнопки с `window.easyPay
 
 ## Как выбирается product ID для select
 
-1. `data-cp-product-id` на выбранном `<option>`, самом `<select>` или ближайшем родителе.
-2. Поле формы `productIdFieldName`, затем `cjmProductId`, `productConfigId`, `cpProductId`.
-3. Для `cjm.init()` перед resolve применяется `productIdMap/productIdMaps`.
+1. Для `cjm.init()` перед resolve применяется `productIdMap/productIdMaps`; найденный ID записывается в поле формы как динамическое CJM-значение.
+2. `data-cp-product-id` на выбранном `<option>`, самом `<select>` или ближайшем родителе.
+3. Динамическое/явное поле формы `productIdFieldName`, затем `cjmProductId`, `productConfigId`, `cpProductId`. Статический `cjmProductId`, созданный через `hiddenFields()`, как источник продукта игнорируется.
 4. Если ID нет — поиск по `brand + select.value/label`.
 
-Автоматически записанный CJM ID помечается `data-cp-tpl-cjm-product-source`, чтобы следующий resolve не принимал собственное старое значение за ручной выбор пользователя.
+Автоматически записанный CJM ID помечается `data-cp-tpl-cjm-product-source`, чтобы следующий resolve не принимал собственное старое значение за ручной выбор пользователя. Значения из `productIdMap` сохраняют отдельную метку источника и остаются валидными для текущего resolve.
+
+### Какой сценарий использовать
+
+**Кнопка без выбора предмета:** задавай продукт рядом с кнопкой через `cjm.initButton({ productId })`. Форма рядом не требуется.
+
+```js
+window.cp_tpl.cjm.initButton({
+  selector: '.auth-btn',
+  productId: 'kid_mini_course_kids_social_science'
+});
+```
+
+**Форма с выбором предмета:** не задавай статический `cjmProductId` через `hiddenFields()`. Используй `productIdMap`, `productIdMaps`, `data-cp-product-id` или resolve по значению select. CJM сам обновит служебное поле формы после выбора продукта.
 
 ## `window.cp_tpl.cjm.init(config)` {#cjm-init}
 
@@ -81,12 +107,10 @@ CJM-модуль связывает Tilda select/кнопки с `window.easyPay
 ### Стандартный вызов
 
 ```js
-window.cp_tpl.hiddenFields({
-  cjmProductId: 'adult_english_not_native_speaker_premium'
-});
-
 window.cp_tpl.cjm.init();
 ```
+
+Этот вызов подходит для динамического CJM-флоу с select. Если продукт у кнопки статичный и выбора предмета нет, используй [`cjm.initButton({ productId })`](#cjm-init-button).
 
 ### Полный вызов
 
@@ -301,7 +325,9 @@ window.cp_tpl.cjm.initButton({
 });
 ```
 
-Также допустима строка: `window.cp_tpl.cjm.initButton('.consultation-btn')`, если product можно однозначно получить из data-атрибутов/формы.
+Для кнопки без выбора предмета это основной способ конфигурации продукта. Не переноси этот `productId` в `hiddenFields({ cjmProductId: ... })`: такая кнопка может быть вне формы.
+
+Также допустима строка: `window.cp_tpl.cjm.initButton('.consultation-btn')`, если product можно однозначно получить из `data-cp-product-id` или из динамического CJM-поля формы. Для статичного продукта предпочтителен явный `productId` в конфиге кнопки.
 
 ### Полный вызов
 

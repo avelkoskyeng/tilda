@@ -3,9 +3,15 @@ layout: default
 title: Terms / соглашения
 nav_order: 12
 search_keywords: >-
-  terms terms.js соглашения consent checkbox чекбокс персональные данные реклама legal agreement
-  initTerms debugTerms DEBUG_TERMS termsConfig termsConsts fallbackId fallbackLink textToFind versionId
-  agreement_link hidden document version id legal skyeng
+  terms terms.js соглашения consent checkbox чекбокс legal agreement skyeng
+search_aliases:
+  init-terms: >-
+    initTerms termsConfig termsConsts соглашения чекбоксы персональные данные реклама legal agreement
+    fallbackId fallbackLink textToFind versionId agreement_link hidden document version id
+  debug-terms: >-
+    debugTerms DEBUG_TERMS debug terms отладка соглашений логирование
+  terms-defaults: >-
+    terms defaults termsConfig termsConsts настройки по умолчанию соглашения default config
 ---
 # `terms.js`: соглашения и legal documents
 

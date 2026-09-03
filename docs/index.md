@@ -40,7 +40,6 @@ search_keywords: >-
 ```html
 <script>
   window.cp_tpl.hiddenFields({
-    cjmProductId: 'adult_english_not_native_speaker_premium',
     comment: 'landing-comment'
   });
 
@@ -61,7 +60,10 @@ search_keywords: >-
     }
   });
 
-  window.cp_tpl.cjm.init();
+  window.cp_tpl.cjm.initButton({
+    selector: '.auth-btn',
+    productId: 'adult_english_not_native_speaker_premium'
+  });
 </script>
 ```
 

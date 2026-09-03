@@ -80,47 +80,47 @@ search.tokenizer_separator: /[\s\-\/\._]+/
 
 ## Дополнительные ключевые слова для поиска
 
-Just the Docs по умолчанию индексирует title/content/URL, но не произвольные поля front matter. Поэтому в проекте добавлен отдельный `search_keywords`.
+Just the Docs по умолчанию индексирует title/content/URL, но не произвольные поля front matter. В проекте используются два дополнительных поля:
+
+- `search_keywords` — общие aliases всей страницы;
+- `search_aliases` — aliases конкретной секции, привязанные к её `{#anchor}`.
 
 Пример страницы:
 
 ```md
 ---
 layout: default
-title: Формы
-nav_order: 4
+title: UI-хелперы
+nav_order: 8
 search_keywords: >-
-  forms form форма формы выбрать все формы select all selectedFormIds
-  fill data page data share televox import group
+  ui helpers dom интерфейс tilda zero block
+search_aliases:
+  marquee: >-
+    marquee бегущая строка бегущий текст ticker бесконечная лента
+  copy: >-
+    copy clipboard копировать промокод буфер обмена
 ---
+
+## `window.cp_tpl.marquee(config)` {#marquee}
 ```
 
-В `docs/_includes/lunr/custom-data.json` поле добавляется в generated search data:
+Ключ `marquee` в `search_aliases` должен совпадать с anchor `{#marquee}`. Тогда alias добавляется только к результату этой секции, а не ко всем методам на странице.
 
-```liquid
-{%- capture newline %}
-{% endcapture -%}
-"search_keywords": {{ include.page.search_keywords | default: "" | markdownify | replace:newline,' ' | strip_html | normalize_whitespace | strip | jsonify }},
-```
+В `docs/_includes/lunr/custom-data.json` оба поля добавляются в generated search data. Затем `docs/_includes/lunr/custom-index.js` берёт anchor текущего search result из `relUrl` и подмешивает только соответствующие секционные aliases.
 
-А `docs/_includes/lunr/custom-index.js` подмешивает его к searchable content:
+Там же заменяется стандартный Lunr `trimmer`: его ASCII-oriented реализация может удалять non-Latin токены. Проект использует trimmer, который сохраняет Latin и Cyrillic символы, поэтому русские запросы индексируются нормально.
 
-```js
-var cpTplSearchContent = [docs[i].content, docs[i].search_keywords];
-docs[i].content = cpTplSearchContent.filter(Boolean).join(' ');
-```
+### Как подбирать aliases
 
-### Как подбирать `search_keywords`
+В `search_keywords` оставляй только общие слова про страницу. Для API-методов предпочитай `search_aliases` и добавляй туда:
 
-Для каждой API-страницы добавляй:
-
-- полное имя функции и короткое имя;
+- полное и короткое имя функции;
 - английские и русские варианты термина;
 - частую задачу пользователя: «редирект после формы», «скопировать промокод», «выбрать все формы»;
-- названия важных аргументов и глобальных интеграций;
-- старые/разговорные названия, по которым функцию реально ищут.
+- названия важных аргументов и интеграций;
+- разговорные и близкие формулировки, по которым функцию реально ищут.
 
-Не нужно дублировать весь текст страницы: keywords должны закрывать только алиасы и формулировки, которых нет в основном контенте.
+Для русского языка полезно явно перечислять наиболее вероятные формы запроса, если они заметно отличаются: например `бегущая строка`, `бегущую строку`, `бегущий текст`.
 
 ## Placeholder и shortcut поиска
 
@@ -152,10 +152,11 @@ search_keywords: >-
 
 ## Проверка покрытия публичного API
 
-После изменения `helpers.js` или `terms.js` запусти:
+После изменения `helpers.js`, `terms.js` или поисковых aliases запусти:
 
 ```bash
 node scripts/check-docs-api.cjs
+node scripts/check-docs-search.cjs
 ```
 
 Скрипт извлекает публичные `window.cp_tpl.*`, публичные function aliases, намеренно создаваемые globals и функции `terms.js`. Если функция нигде не упомянута в Markdown, команда завершится с ошибкой и покажет список пропусков.
@@ -175,18 +176,21 @@ node scripts/check-docs-api.cjs
 3. Проверить sidebar и API index.
 4. Проверить поиск по полному имени: `cp_tpl.forms.selectAll`.
 5. Проверить поиск по части имени: `selectAll`, `forms`.
-6. Проверить русский alias: например `выбрать все формы`.
-7. Проверить аргумент: например `waitForStableDom`.
-8. Проверить `Ctrl/Cmd + K`.
+6. Проверить русский alias: `бегущая строка` → `cp_tpl.marquee`.
+7. Проверить task alias: `выбрать все формы` → `cp_tpl.forms.selectAll`.
+8. Проверить аргумент: например `waitForStableDom`.
+9. Проверить `Ctrl/Cmd + K`.
 
 ## Частые проблемы
 
-### Новые keywords не находятся
+### Новые aliases не находятся
 
-Проверь три вещи:
+Проверь:
 
-- в front matter страницы есть `search_keywords`;
+- общий alias лежит в `search_keywords`, а method-specific alias — в `search_aliases`;
+- ключ `search_aliases` совпадает с `{#anchor}` нужной секции;
 - файлы `_includes/lunr/custom-data.json` и `custom-index.js` попали в репозиторий;
+- `node scripts/check-docs-search.cjs` проходит без ошибок;
 - GitHub Pages уже пересобрал сайт после commit.
 
 ### Сайт собирается из root, а не из docs

@@ -3,9 +3,25 @@ layout: default
 title: Hidden fields и UTM
 nav_order: 5
 search_keywords: >-
-  hidden fields hidden input скрытые поля utm query параметры url search params buildUtmMarks
-  promo promocode marketingExperiments comment overwrite force apply destroy getValues applyParams
-  updateURLParameters getHiddenFieldsForUtmMarks utmParameters tracking метки
+  hidden fields utm tracking параметры формы query string cp_tpl
+search_aliases:
+  hidden-fields: >-
+    hiddenFields hidden fields hidden input скрытые поля создать скрытые поля promo promocode
+    marketingExperiments comment overwrite force apply destroy
+  hidden-fields-get-values: >-
+    hiddenFields getValues get values получить скрытые поля значения hidden values
+  utm: >-
+    utm query параметры url search params utmParameters tracking метки собрать utm
+  global-build-utm-marks: >-
+    buildUtmMarks global глобальный build utm marks собрать utmMarks
+  utm-apply-params: >-
+    applyParams apply params добавить параметры URLSearchParams merge query
+  utm-update-url: >-
+    updateURLParameters update url parameters обновить url параметры query string
+  utm-build-marks: >-
+    cp_tpl utm buildUtmMarks build marks собрать utm строку utmMarks
+  utm-hidden-values: >-
+    getHiddenFieldsForUtmMarks hidden fields utm получить hidden значения для utm
 ---
 # Hidden fields и UTM
 
@@ -20,8 +36,7 @@ search_keywords: >-
 ```js
 window.cp_tpl.hiddenFields({
   promoCode: 'SALE',
-  comment: 'landing-comment',
-  cjmProductId: 'adult_english_not_native_speaker_premium'
+  comment: 'landing-comment'
 });
 ```
 
@@ -35,8 +50,7 @@ var hidden = window.cp_tpl.hiddenFields(
     comment: 'landing-comment',
     serviceTypeKey: 'english_adult_not_native_speaker_premium',
     productKitCode: '',
-    tariffUuid: '',
-    cjmProductId: 'adult_english_not_native_speaker_premium'
+    tariffUuid: ''
   },
   {
     formSelector: 'form',
@@ -45,7 +59,7 @@ var hidden = window.cp_tpl.hiddenFields(
     overwriteExisting: false,
     force: false,
     utmMarksMap: {
-      cjmProductId: 'productConfigId'
+      serviceTypeKey: 'serviceTypeKey'
     }
   }
 );
@@ -62,6 +76,12 @@ var hidden = window.cp_tpl.hiddenFields(
 | `config.overwriteExisting` | boolean | `false` | Если `true`, каждый `apply()` принудительно ставит значение из `fields`, даже если другой скрипт уже его изменил. |
 | `config.force` | boolean | `false` | Alias для `overwriteExisting`. |
 | `config.utmMarksMap` | object | стандартная карта | Расширяет mapping `hidden field -> UTM param`, который использует `buildUtmMarks`. |
+
+### `cjmProductId` не задаём через `hiddenFields`
+
+`hiddenFields()` не является способом выбрать CJM-продукт. Для отдельной CJM-кнопки без выбора предмета указывай `productId` прямо в `window.cp_tpl.cjm.initButton(...)`; кнопка при этом не обязана находиться внутри формы.
+
+Во флоу с выбором предмета продукт определяется динамически через CJM (`productIdMap`, `data-cp-product-id`, значение select и другие CJM-настройки). После resolve CJM сам может создать или обновить служебный `cjmProductId` в форме. Статическое значение, добавленное через `hiddenFields()`, CJM при выборе продукта игнорирует.
 
 ### Почему по умолчанию значения не перетираются
 
