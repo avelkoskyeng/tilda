@@ -3778,6 +3778,10 @@
 
     if (!shouldHandleSelect(select, context, config)) return;
 
+    // Empty value is a normal placeholder state. Do not try to resolve a CJM
+    // product until the select has a real value, unless productId is explicit.
+    if (!context.productId && !normalizeValue(context.selectedValue)) return;
+
     var product = resolveProductByContext(context, config);
 
     if (!product) {
