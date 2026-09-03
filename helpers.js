@@ -2970,7 +2970,7 @@
             brand: 'skysmart',
             id: 'kid_preschool_kids_f2f',
             label: 'Дошкольная подготовка',
-            selectValues: ['Дошкольная подготовка', 'preschool'],
+            selectValues: ['Дошкольная подготовка', 'preschool', 'Подготовка к школе'],
             selectedStk: 'preschool_kids_f2f'
         },
         {
