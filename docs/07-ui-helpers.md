@@ -194,7 +194,7 @@ window.cp_tpl.scrollIndicator({
 
 ## `window.cp_tpl.spacer(config)` {#spacer}
 
-Создаёт/подгоняет spacer в конце `#allrecords`, чтобы контент заполнял viewport по высоте без лишнего overflow.
+Создаёт/подгоняет spacer в месте вызова: при синхронном вызове из HTML-блока (например, T123) новый spacer вставляется сразу после верхнеуровневого блока `#allrecords`, внутри которого был вызван `window.cp_tpl.spacer()`. Это позволяет поставить T123 перед футером и получить spacer между контентом и футером без отдельного селектора футера. Если место вызова определить нельзя, spacer по-прежнему добавляется в конец `#allrecords`.
 
 ### Стандартный вызов
 
@@ -218,6 +218,8 @@ var spacer = window.cp_tpl.spacer({
 ```
 
 `class` — alias для `className`, `backgroundColor` — alias для `bgColor`.
+
+Позиция нового spacer определяется по `document.currentScript`, поэтому для привязки к T123 вызывайте `window.cp_tpl.spacer()` непосредственно в его `<script>`, а не из отложенного callback (`setTimeout`, event handler и т. п.). Уже существующий spacer, найденный по `spacerSelector`, не переносится.
 
 ### Аргументы
 

@@ -1220,6 +1220,7 @@
     var spacerSelector = config.spacerSelector || '.' + className.split(/\s+/)[0];
     var bgColor = config.bgColor || config.backgroundColor || '';
     var safetyGap = typeof config.safetyGap === 'number' ? config.safetyGap : 0;
+    var callerScript = document.currentScript;
     var rafId = null;
 
     ensureStyle('cp_tpl_spacer_style', [
@@ -1229,6 +1230,18 @@
       '  will-change: height;',
       '}'
     ].join('\n'));
+
+    function getCallerBlock(allrecords) {
+      if (!callerScript || !allrecords.contains(callerScript)) return null;
+
+      var element = callerScript;
+
+      while (element.parentNode && element.parentNode !== allrecords) {
+        element = element.parentNode;
+      }
+
+      return element.parentNode === allrecords ? element : null;
+    }
 
     function getElements() {
       var allrecords = document.querySelector(allrecordsSelector);
@@ -1242,7 +1255,13 @@
           ? 'empty_spacer ' + className
           : className;
 
-        allrecords.appendChild(spacer);
+        var callerBlock = getCallerBlock(allrecords);
+
+        if (callerBlock) {
+          allrecords.insertBefore(spacer, callerBlock.nextSibling);
+        } else {
+          allrecords.appendChild(spacer);
+        }
       }
 
       if (spacer && bgColor) {
