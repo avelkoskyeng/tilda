@@ -2944,6 +2944,46 @@
             selectedStk: 'english_adult_not_native_speaker'
         },
         {
+            brand: 'skyeng',
+            label: 'Английский гибкий',
+            selectValues: ['Гибкий'],
+            id: 'adult_english_adult_kit_flex',
+            productKitCode: 'english_adult_kit',
+            kitTariffUuid: '37764e2b-8d53-4065-b548-9d56b43ef2cf'
+        },
+         {
+            brand: 'skyeng',
+            label: 'Английский базовый',
+            selectValues: ['Базовый'],
+            id: 'adult_english_adult_kit_base',
+            productKitCode: 'english_adult_kit',
+            kitTariffUuid: '08fb839a-a9ce-42f6-ab8b-0074ec6881db'
+        },
+         {
+            brand: 'skyeng',
+            label: 'Английский про',
+            selectValues: ['Про'],
+            id: 'adult_english_adult_kit_pro',
+            productKitCode: 'english_adult_kit',
+            kitTariffUuid: 'de3a57ae-6c06-453a-a791-5c111cc4395a'
+        },
+         {
+            brand: 'skyeng',
+            label: 'Английский максимальный',
+            selectValues: ['Максимальный'],
+            id: 'adult_english_adult_kit_max',
+            productKitCode: 'english_adult_kit',
+            kitTariffUuid: '2d9c0b46-a808-475f-8966-95cd53aa7ed4'
+        },
+         {
+            brand: 'skyeng',
+            label: 'Английский комплектация',
+            selectValues: ['Комплектация'],
+            id: 'adult_english_adult_kit',
+            productKitCode: 'english_adult_kit',
+            kitTariffUuid: 'b7e3366e-2f4d-445d-aef0-54864c301b0e'
+        },
+        {
             brand: 'skysmart',
             id: 'kid_mini_course_kids_russian',
             label: 'Русский язык',
