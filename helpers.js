@@ -2777,6 +2777,20 @@
         },
         {
             brand: 'skysmart',
+            label: 'Шахматы',
+            selectValues: ['Шахматы', 'Шахматы индивидуальные'],
+            id: 'kid_chess_kids_f2f',
+            selectedStk: 'chess_kids_f2f'
+        },
+        {
+            brand: 'skysmart',
+            label: 'Шахматы',
+            selectValues: ['Шахматы короткие'],
+            id: 'kid_chess_kids_f2f_short_lessons',
+            selectedStk: 'chess_kids_f2f_short_lessons'
+        },
+        {
+            brand: 'skysmart',
             label: 'Математика',
             selectValues: ['Математика', 'math'],
             id: 'kid_mini_course_kids_math',
@@ -2785,140 +2799,140 @@
         {
             brand: 'skysmart',
             label: 'Греческий',
-            selectValues: ['Греческий', 'greek'],
+            selectValues: ['Греческий', 'Греческий язык', 'greek'],
             id: 'kid_greek_junior_not_native_speaker_premium',
             selectedStk: 'greek_junior_not_native_speaker_premium'
         },
         {
             brand: 'skyeng',
             label: 'Греческий',
-            selectValues: ['Греческий', 'greek'],
+            selectValues: ['Греческий', 'Греческий язык', 'greek'],
             id: 'adult_greek_not_native_speaker_premium',
             selectedStk: 'greek_adult_not_native_speaker_premium'
         },
         {
             brand: 'skysmart',
             label: 'Испанский',
-            selectValues: ['Испанский', 'spanish'],
+            selectValues: ['Испанский', 'Испанский язык', 'spanish'],
             id: 'kid_spanish_junior_not_native_speaker_premium',
             selectedStk: 'spanish_junior_not_native_speaker_premium'
         },
         {
             brand: 'skyeng',
             label: 'Испанский',
-            selectValues: ['Испанский', 'spanish'],
+            selectValues: ['Испанский', 'Испанский язык', 'spanish'],
             id: 'adult_spanish_not_native_speaker_premium',
             selectedStk: 'spanish_adult_not_native_speaker_premium'
         },
         {
             brand: 'skysmart',
             label: 'Итальянский',
-            selectValues: ['Итальянский', 'italian'],
+            selectValues: ['Итальянский', 'Итальянский язык', 'italian'],
             id: 'kid_italian_junior_not_native_speaker_premium',
             selectedStk: 'italian_junior_not_native_speaker_premium'
         },
         {
             brand: 'skyeng',
             label: 'Итальянский',
-            selectValues: ['Итальянский', 'italian'],
+            selectValues: ['Итальянский', 'Итальянский язык', 'italian'],
             id: 'adult_italian_not_native_speaker_premium',
             selectedStk: 'italian_adult_not_native_speaker_premium'
         },
         {
             brand: 'skysmart',
             label: 'Китайский',
-            selectValues: ['Китайский', 'chinese'],
+            selectValues: ['Китайский', 'Китайский язык', 'chinese'],
             id: 'kid_chinese_junior_not_native_speaker_premium',
             selectedStk: 'chinese_junior_not_native_speaker_premium'
         },
         {
             brand: 'skyeng',
             label: 'Китайский',
-            selectValues: ['Китайский', 'chinese'],
+            selectValues: ['Китайский', 'Китайский язык', 'chinese'],
             id: 'adult_chinese_not_native_speaker_premium',
             selectedStk: 'chinese_adult_not_native_speaker_premium'
         },
         {
             brand: 'skysmart',
             label: 'Корейский',
-            selectValues: ['Корейский', 'korean'],
+            selectValues: ['Корейский', 'Корейский язык', 'korean'],
             id: 'kid_korean_junior_not_native_speaker_premium',
             selectedStk: 'korean_junior_not_native_speaker_premium'
         },
         {
             brand: 'skyeng',
             label: 'Корейский',
-            selectValues: ['Корейский', 'korean'],
+            selectValues: ['Корейский', 'Корейский язык', 'korean'],
             id: 'adult_korean_not_native_speaker_premium',
             selectedStk: 'korean_adult_not_native_speaker_premium'
         },
         {
             brand: 'skysmart',
             label: 'Немецкий',
-            selectValues: ['Немецкий', 'german'],
+            selectValues: ['Немецкий', 'Немецкий язык', 'german'],
             id: 'kid_german_junior_not_native_speaker_premium',
             selectedStk: 'german_junior_not_native_speaker_premium'
         },
         {
             brand: 'skyeng',
             label: 'Немецкий',
-            selectValues: ['Немецкий', 'german'],
+            selectValues: ['Немецкий', 'Немецкий язык', 'german'],
             id: 'adult_german_not_native_speaker_premium',
             selectedStk: 'german_adult_not_native_speaker_premium'
         },
         {
             brand: 'skysmart',
             label: 'Португальский',
-            selectValues: ['Португальский', 'portuguese'],
+            selectValues: ['Португальский', 'Португальский язык', 'portuguese'],
             id: 'kid_portuguese_junior_not_native_speaker_premium',
             selectedStk: 'portuguese_junior_not_native_speaker_premium'
         },
         {
             brand: 'skyeng',
             label: 'Португальский',
-            selectValues: ['Португальский', 'portuguese'],
+            selectValues: ['Португальский', 'Португальский язык', 'portuguese'],
             id: 'adult_portuguese_not_native_speaker_premium',
             selectedStk: 'portuguese_adult_not_native_speaker_premium'
         },
         {
             brand: 'skysmart',
             label: 'Турецкий',
-            selectValues: ['Турецкий', 'turkish'],
+            selectValues: ['Турецкий', 'Турецкий язык', 'turkish'],
             id: 'kid_turkish_junior_not_native_speaker_premium',
             selectedStk: 'turkish_junior_not_native_speaker_premium'
         },
         {
             brand: 'skyeng',
             label: 'Турецкий',
-            selectValues: ['Турецкий', 'turkish'],
+            selectValues: ['Турецкий', 'Турецкий язык', 'turkish'],
             id: 'adult_turkish_not_native_speaker_premium',
             selectedStk: 'turkish_adult_not_native_speaker_premium'
         },
         {
             brand: 'skysmart',
             label: 'Французский',
-            selectValues: ['Французский', 'french'],
+            selectValues: ['Французский', 'Французский язык', 'french'],
             id: 'kid_french_junior_not_native_speaker_premium',
             selectedStk: 'french_junior_not_native_speaker_premium'
         },
         {
             brand: 'skyeng',
             label: 'Французский',
-            selectValues: ['Французский', 'french'],
+            selectValues: ['Французский', 'Французский язык', 'french'],
             id: 'adult_french_not_native_speaker_premium',
             selectedStk: 'french_adult_not_native_speaker_premium'
         },
         {
             brand: 'skysmart',
             label: 'Японский',
-            selectValues: ['Японский', 'japanese'],
+            selectValues: ['Японский', 'Японский язык', 'japanese'],
             id: 'kid_japanese_junior_not_native_speaker_premium',
             selectedStk: 'japanese_junior_not_native_speaker_premium'
         },
         {
             brand: 'skyeng',
             label: 'Японский',
-            selectValues: ['Японский', 'japanese'],
+            selectValues: ['Японский', 'Японский язык', 'japanese'],
             id: 'adult_japanese_not_native_speaker_premium',
             selectedStk: 'japanese_adult_not_native_speaker_premium'
         },
@@ -2932,7 +2946,7 @@
         {
             brand: 'skyeng',
             label: 'Английский',
-            selectValues: ['Английский', 'english'],
+            selectValues: ['Английский', 'Английский язык', 'english'],
             id: 'adult_english_adult_not_native_speaker_course_elementary',
             selectedStk: 'english_adult_not_native_speaker_course_elementary'
         },
@@ -3015,7 +3029,7 @@
             brand: 'skysmart',
             id: 'kid_mini_course_cc_python_kids_pl',
             label: 'Программирование',
-            selectValues: ['Программирование', 'programming'],
+            selectValues: ['Программирование', 'programming', 'Программирование на Python'],
             selectedStk: 'mini_course_cc_python_kids_pl'
         },
         {
@@ -3062,7 +3076,7 @@
         {
             brand: 'skysmart',
             label: '5-11 класс',
-            selectValues: ['Домашний лицей 5-11 класс'],
+            selectValues: ['Домашний лицей 5-11 класс', 'Домашний лицей'],
             id: 'kid_skysmart_homeschooling_5_11_grade',
             productKitCode: 'skysmart_homeschooling_8_grade',
             kitTariffUuid: 'b01d1028-b73c-45e8-87a7-bc126302c5ef'
