@@ -3087,7 +3087,7 @@
             selectValues: ['Домашний лицей', 'Домашний лицей 1-11 класс'],
             id: 'kid_skysmart_homeschooling_1_11_grade',
             productKitCode: 'skysmart_homeschooling_8_grade',
-            kitTariffUuid: 'fe7df61e-f2a5-41ca-914e-20b123920990'
+            kitTariffUuid: 'eb5edce8-e4e5-420e-9647-5c482eaf322d'
         },
         {
             brand: 'skysmart',
