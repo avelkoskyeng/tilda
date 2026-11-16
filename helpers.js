@@ -763,16 +763,39 @@
     });
 
     var viewportWidth = getMarqueeViewportWidth();
+    var targetWidth = viewportWidth * options.minWidthFactor;
+    var baseWidth = track.scrollWidth;
 
-    while (track.scrollWidth < viewportWidth * options.minWidthFactor) {
+    // Hidden blocks have no measurable width; retry on the next rebuild.
+    if (
+      baseWidth <= 0 ||
+      !Number.isFinite(targetWidth) ||
+      targetWidth <= 0
+    ) {
+      return;
+    }
+
+    var maxPasses = 100;
+
+    for (
+      var pass = 0;
+      baseWidth < targetWidth && pass < maxPasses;
+      pass++
+    ) {
       originalItems.forEach(function (item) {
         var clone = item.cloneNode(true);
         clone.dataset.clone = 'true';
         track.appendChild(clone);
       });
+
+      var nextWidth = track.scrollWidth;
+
+      if (nextWidth <= baseWidth) return;
+
+      baseWidth = nextWidth;
     }
 
-    var baseWidth = track.scrollWidth;
+    if (baseWidth < targetWidth) return;
 
     toArray(track.children).forEach(function (item) {
       var clone = item.cloneNode(true);
