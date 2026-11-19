@@ -21,6 +21,8 @@ search_aliases:
     switchBlocks switch blocks переключить блоки табы tabs витрина desktop mobile triggers
   copy: >-
     copy clipboard копировать скопировать промокод буфер обмена alert notification уведомление
+  exit-popup-flow: >-
+    exitPopupFlow exit intent попап при уходе выход авторизация guest auth T723 cookie repeatDays activationDelaySeconds
 ---
 # UI-хелперы
 
@@ -367,3 +369,49 @@ window.cp_tpl.copy({
 | `hideDelay` | number | `1000` | Через сколько ms скрыть alert. |
 
 Сначала используется `navigator.clipboard.writeText`; при ошибке или отсутствии API — fallback через hidden `<textarea>` и `document.execCommand('copy')`.
+
+## `window.cp_tpl.exitPopupFlow(user, options)` {#exit-popup-flow}
+
+Выбирает попап для гостя или авторизованного пользователя и открывает его через штатный click handler Tilda при уходе мыши за верхнюю границу окна (`clientY <= 10`). Штатные T723 для этих попапов нужно отключить в редакторе, сами попапы оставить на странице.
+
+### Стандартный вызов
+
+Добавьте вызов в существующий callback проверки авторизации, сохранив остальную обработку:
+
+```js
+window.skyengTildaForms.onSkyengUserChange(function (user) {
+  window.cp_tpl.exitPopupFlow(user);
+});
+```
+
+До первого вызова попап не показывается. Helper сам не подписывается на авторизацию. Для страницы без проверки авторизации можно явно вызвать `window.cp_tpl.exitPopupFlow(null)`.
+
+### Полный вызов
+
+```js
+var exitPopupOptions = {
+  hooks: { guest: '#exit', auth: '#exit-auth' },
+  repeatDays: 1,
+  activationDelaySeconds: 15
+};
+
+window.skyengTildaForms.onSkyengUserChange(function (user) {
+  window.cp_tpl.exitPopupFlow(user, exitPopupOptions);
+});
+```
+
+| Аргумент | Тип | По умолчанию | Что делает |
+|---|---|---|---|
+| `user` | object/null | — | Truthy — авторизованный пользователь, falsy — гость. Передавайте результат завершённой проверки авторизации. |
+| `options.hooks.guest` | string | `#exit` | Непустой hash hook гостевого попапа, совпадающий с `data-tooltip-hook`. |
+| `options.hooks.auth` | string | `#exit-auth` | Hook попапа авторизованного пользователя. |
+| `options.repeatDays` | number | `1` | Пауза между показами в днях; допускается дробное значение. `0` отключает cookie. |
+| `options.activationDelaySeconds` | number | `15` | Минимальный возраст страницы в секундах. При наличии `performance.now()` отсчитывается от начала загрузки документа; иначе — от загрузки модуля. |
+
+Каждый вызов заново применяет настройки с defaults; при своих настройках передавайте тот же `options` при каждом изменении пользователя. Отрицательные, бесконечные и выходящие за поддерживаемый диапазон числа, а также некорректные hooks вызывают `Error`, сохраняя предыдущие рабочие настройки.
+
+Обработчик ухода добавляется один раз при первом корректном вызове. На одну загрузку страницы допускается только один успешный показ, в том числе после входа/выхода. При смене пользователя уже открытый попап противоположного сценария закрывается штатной кнопкой. Если оба hooks совпадают, попап остаётся открытым.
+
+При `repeatDays > 0` используется cookie с именем из `#allrecords[data-tilda-page-id]`, значением `t724cookie` и `path=/`, как в исходном сценарии. Любое непустое значение такой cookie блокирует показ; лимит общий для гостя и авторизованного пользователя. Без ID страницы показ с cookie не выполняется; с `repeatDays: 0` ID не требуется.
+
+При `window.isMobile` показ отключён. Если попап отсутствует, реестр `window.tPopupObj` ещё не готов или открытие не подтверждено его `openPopUpList`, показ и cookie не расходуются: следующая попытка возможна при новом уходе мыши. Функция ничего не возвращает.
