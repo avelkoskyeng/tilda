@@ -4072,6 +4072,112 @@
 
 })(window, document);
 
+(function (window, document) {
+  'use strict';
+
+  var cp = window.cp_tpl = window.cp_tpl || {};
+  var currentHook = null; // До первого ответа проверки авторизации ничего не показываем.
+  var repeatDays;
+  var delaySeconds;
+  var shown = false;
+  var bound = false;
+  var startedAt = Date.now();
+
+  function pageAgeMs() {
+    return window.performance && typeof window.performance.now === 'function'
+      ? window.performance.now() : Date.now() - startedAt;
+  }
+
+  function findPopup(hook) {
+    var popups = document.querySelectorAll('.t-popup[data-tooltip-hook]');
+    for (var i = 0; i < popups.length; i++) {
+      if (popups[i].getAttribute('data-tooltip-hook') === hook) return popups[i];
+    }
+    return null;
+  }
+
+  function hasCookie(name) {
+    return document.cookie.split(';').some(function (part) {
+      part = part.trim();
+      return part.indexOf(name + '=') === 0 && part.slice(name.length + 1) !== '';
+    });
+  }
+
+  function onMouseOut(event) {
+    if (window.isMobile || !currentHook || shown) return;
+    if (event.relatedTarget || event.clientY > 10) return;
+    if (pageAgeMs() < delaySeconds * 1000 || !document.body) return;
+    if (!findPopup(currentHook)) return;
+
+    var root = document.getElementById('allrecords');
+    var cookieName = root && root.getAttribute('data-tilda-page-id');
+    if (repeatDays > 0 && (!cookieName || hasCookie(cookieName))) return;
+
+    var popupState = window.tPopupObj;
+    if (!popupState || !Array.isArray(popupState.hookList) ||
+        !Array.isArray(popupState.openPopUpList) ||
+        popupState.hookList.indexOf(currentHook) === -1 ||
+        popupState.openPopUpList.indexOf(currentHook) !== -1) return;
+
+    var link = document.createElement('a');
+    link.href = currentHook;
+    link.hidden = true;
+    document.body.appendChild(link);
+    try {
+      link.click();
+    } finally {
+      link.remove();
+    }
+
+    // Не расходуем показ, если штатный обработчик Tilda не открыл попап.
+    if (popupState.openPopUpList.indexOf(currentHook) === -1) return;
+    shown = true;
+    if (repeatDays > 0) {
+      var expires = new Date(Date.now() + repeatDays * 86400000).toUTCString();
+      document.cookie = cookieName + '=t724cookie; expires=' + expires + '; path=/';
+    }
+  }
+
+  // Штатные T723 для этих попапов должны быть отключены в редакторе.
+  cp.exitPopupFlow = function (user, options) {
+    options = options || {};
+    var hooks = Object.assign({ guest: '#exit', auth: '#exit-auth' }, options.hooks);
+    var nextRepeatDays = options.repeatDays === undefined ? 1 : Number(options.repeatDays);
+    var nextDelaySeconds = options.activationDelaySeconds === undefined
+      ? 15 : Number(options.activationDelaySeconds);
+    if (!Number.isFinite(nextRepeatDays) || nextRepeatDays < 0 ||
+        !Number.isFinite(nextDelaySeconds) || nextDelaySeconds < 0 ||
+        !Number.isFinite(nextRepeatDays * 86400000) ||
+        !Number.isFinite(new Date(Date.now() + nextRepeatDays * 86400000).getTime()) ||
+        !Number.isFinite(nextDelaySeconds * 1000)) {
+      throw new Error('Exit popup: repeatDays and activationDelaySeconds must be non-negative numbers within the supported range');
+    }
+    if (typeof hooks.guest !== 'string' || !/^#\S+$/.test(hooks.guest) ||
+        typeof hooks.auth !== 'string' || !/^#\S+$/.test(hooks.auth)) {
+      throw new Error('Exit popup: hooks.guest and hooks.auth must be non-empty hash links');
+    }
+
+    // Сохраняем настройки только после полной валидации.
+    repeatDays = nextRepeatDays;
+    delaySeconds = nextDelaySeconds;
+    currentHook = user ? hooks.auth : hooks.guest;
+    if (!bound) {
+      document.addEventListener('mouseout', onMouseOut);
+      bound = true;
+    }
+
+    var inactiveHook = user ? hooks.guest : hooks.auth;
+    var popupState = window.tPopupObj;
+    if (inactiveHook === currentHook || !popupState ||
+        !Array.isArray(popupState.openPopUpList) ||
+        popupState.openPopUpList.indexOf(inactiveHook) === -1) return;
+    var inactivePopup = findPopup(inactiveHook);
+    var closeButton = inactivePopup && inactivePopup.querySelector('.t-popup__close-wrapper');
+    if (closeButton) closeButton.click();
+  };
+
+})(window, document);
+
 // Zone JS для t1093
 function waitForZoneJs(timeout = 60000, interval = 10) {
   return new Promise((resolve) => {

@@ -77,6 +77,7 @@ search_keywords: >-
 | `window.fitTildaSpacer` | [fitTildaSpacer](07-ui-helpers.md#fit-tilda-spacer) |
 | `window.cp_tpl.switchBlocks` | [switchBlocks](07-ui-helpers.md#switch-blocks) |
 | `window.cp_tpl.copy` | [copy](07-ui-helpers.md#copy) |
+| `window.cp_tpl.exitPopupFlow` | [exitPopupFlow](07-ui-helpers.md#exit-popup-flow) |
 
 ## Сервисные и Terms
 
